@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Title/description below are also set from config.js at runtime.
+       Edit assets/js/config.js to change the site; these are just fallbacks. -->
+  <title>Portfolio</title>
+  <meta name="description" content="Personal portfolio." id="meta-description" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Portfolio" id="og-title" />
+  <meta property="og:description" content="Personal portfolio." id="og-description" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+
+  <link rel="icon" id="favicon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90' font-family='monospace'%3E%E2%97%88%3C/text%3E%3C/svg%3E" />
+
+  <!-- config.js must load before the anti-flash script so we know the default theme -->
+  <script src="assets/js/config.js?v=2.0"></script>
+
+  <!-- Apply saved (or default) theme before paint to avoid a flash of the wrong theme -->
+  <script>
+    (function () {
+      try {
+        var valid = ['professional', 'neural', 'light'];
+        var fallback = (window.CONFIG && CONFIG.defaultTheme) || 'light';
+        var t = localStorage.getItem('mdtheme');
+        document.documentElement.setAttribute('data-theme', valid.indexOf(t) > -1 ? t : fallback);
+      } catch (e) {}
+    })();
+  </script>
+
+  <link rel="stylesheet" href="assets/css/style.css?v=2.0" />
+</head>
+<body>
+  <!--  Animated neural-network background canvas  -->
+  <canvas id="neural-bg" aria-hidden="true"></canvas>
+
+  <!-- Scroll progress bar -->
+  <div class="scroll-progress" id="scroll-progress" aria-hidden="true"></div>
+
+  <!--  Navigation  -->
+  <header class="nav" id="nav">
+    <a href="#home" class="nav__logo" id="nav-logo" aria-label="Home"></a>
+    <nav class="nav__links" aria-label="Primary">
+      <a href="#about">About</a>
+      <a href="#skills">Skills</a>
+      <a href="#projects">Projects</a>
+      <a href="#experience">Experience</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <div class="nav__actions">
+      <button class="kbar-hint" id="open-palette" aria-label="Open command palette">
+        <kbd>Ctrl</kbd><kbd>K</kbd>
+      </button>
+      <div class="theme-menu" id="theme-menu">
+        <button class="theme-menu__btn" id="theme-btn" aria-haspopup="listbox" aria-expanded="false" aria-label="Choose colour theme">
+          <span class="theme-swatch sw-light" data-sw></span>
+          <span class="theme-menu__label" data-label>Light</span>
+          <svg class="theme-menu__chev" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <ul class="theme-menu__list" id="theme-list" role="listbox" aria-label="Colour theme">
+          <li role="option" data-theme-value="light" aria-selected="true"><span class="theme-swatch sw-light"></span>Light</li>
+          <li role="option" data-theme-value="professional" aria-selected="false"><span class="theme-swatch sw-professional"></span>Subtle Dark</li>
+          <li role="option" data-theme-value="neural" aria-selected="false"><span class="theme-swatch sw-neural"></span>Colorful Dark</li>
+        </ul>
+      </div>
+      <button class="nav__burger" id="nav-burger" aria-label="Open menu"><span></span><span></span><span></span></button>
+    </div>
+  </header>
+
+  <main>
+    <!--  HERO  -->
+    <section class="hero" id="home">
+      <div class="hero__inner reveal" id="hero-inner"><!-- rendered from config --></div>
+      <a href="#about" class="hero__scroll" aria-label="Scroll down"><span></span></a>
+    </section>
+
+    <!--  ABOUT  -->
+    <section class="section" id="about">
+      <div class="section__head reveal">
+        <span class="section__index">01</span>
+        <h2 class="section__title" id="title-about">About</h2>
+        <div class="section__rule"></div>
+      </div>
+      <div class="about" id="about-mount"><!-- rendered from config --></div>
+    </section>
+
+    <!--  SKILLS  -->
+    <section class="section" id="skills">
+      <div class="section__head reveal">
+        <span class="section__index">02</span>
+        <h2 class="section__title" id="title-skills">Skills</h2>
+        <div class="section__rule"></div>
+      </div>
+      <div class="skills" id="skills-grid"><!-- rendered from config --></div>
+    </section>
+
+    <!--  PROJECTS  -->
+    <section class="section" id="projects">
+      <div class="section__head reveal">
+        <span class="section__index">03</span>
+        <h2 class="section__title" id="title-projects">Projects</h2>
+        <div class="section__rule"></div>
+      </div>
+      <div id="featured-mount"><!-- featured project rendered from config --></div>
+      <div class="proj-grid" id="proj-grid"><!-- rendered from config --></div>
+    </section>
+
+    <!--  EXPERIENCE  -->
+    <section class="section" id="experience">
+      <div class="section__head reveal">
+        <span class="section__index">04</span>
+        <h2 class="section__title" id="title-experience">Experience</h2>
+        <div class="section__rule"></div>
+      </div>
+      <div class="timeline" id="timeline"><!-- rendered from config --></div>
+    </section>
+
+    <!--  CONTACT  -->
+    <section class="section section--contact" id="contact">
+      <div class="contact reveal" id="contact-mount"><!-- rendered from config --></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span id="footer-left"></span>
+    <span class="footer__built" id="footer-right"></span>
+  </footer>
+
+  <!--  Command palette  -->
+  <div class="palette" id="palette" role="dialog" aria-modal="true" aria-label="Command palette" hidden>
+    <div class="palette__backdrop" data-close></div>
+    <div class="palette__box">
+      <input type="text" id="palette-input" class="palette__input" placeholder="Type a command or jump to a section…" autocomplete="off" />
+      <ul class="palette__list" id="palette-list"></ul>
+      <div class="palette__foot"><kbd>↑↓</kbd> navigate <kbd>↵</kbd> select <kbd>esc</kbd> close</div>
+    </div>
+  </div>
+
+  <script src="assets/js/app.js?v=2.0" defer></script>
+</body>
+</html>
