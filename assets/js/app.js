@@ -77,7 +77,7 @@ function setAttr(sel, attr, val) { const el = $(sel); if (el) el.setAttribute(at
 function renderBrand() {
   const b = CONFIG.brand || {};
   $('#nav-logo').innerHTML =
-    `${b.monogram ? `<span class="nav__mono">${b.monogram}</span> ` : ''}${b.pre || ''}<span class="accent">.</span>${b.post || ''}`;
+    `${b.monogram ? `<span class="nav__mono">${b.monogram}</span> ` : ''}${b.pre || ''}<span class="accent"> </span>${b.post || ''}`;
 }
 
 function renderSectionTitles() {
@@ -207,10 +207,20 @@ function renderProjects() {
 
 function projectLinks(p) {
   const out = [];
+  if (p.play) out.push(`<button type="button" class="pcard__play" data-play="${p.play}">▶ Play</button>`);
   if (p.repo) out.push(`<a href="${p.repo}" target="_blank" rel="noopener">Source ↗</a>`);
   if (p.paper) out.push(`<a class="js-file-link" href="${p.paper}" target="_blank" rel="noopener">Read report ↗</a>`);
   if (!out.length) out.push(`<span class="pcard__muted">Team / academic project — no public source</span>`);
   return out.join('');
+}
+
+/* Wire up the "▶ Play" buttons (currently: Brick Breaker mini-game) */
+function wirePlayButtons() {
+  document.getElementById('proj-grid').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-play]');
+    if (!btn) return;
+    if (btn.dataset.play === 'brick' && window.BrickGame) window.BrickGame.open();
+  });
 }
 
 /* ================================================================== *
@@ -590,4 +600,5 @@ document.addEventListener('DOMContentLoaded', () => {
   mobileNav();
   commandPalette();
   checkFiles();
+  wirePlayButtons();
 });

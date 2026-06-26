@@ -23,9 +23,9 @@ const CONFIG = {
 
   /* ---- Top-left logo ---- */
   brand: {
-    monogram: '◈',         // small symbol before your name ('' to hide)
-    pre: 'Mohammed',       // text before the accent dot
-    post: 'Dasouqi',       // text after the accent dot
+    monogram: '',         // small symbol before your name ('' to hide)
+    pre: 'Mohammed',       // text before the accent space
+    post: 'Dasouqi',       // text after the accent space
   },
 
   /* ---- Default colour theme: 'light' | 'professional' | 'neural' ---- */
@@ -168,6 +168,7 @@ const CONFIG = {
       image: null,
       repo: 'https://github.com/7amoody1985/Basic-Brick-Breaker-Game',
       paper: null,
+      play: 'brick',   // adds a "▶ Play" button that opens the in-browser mini-game (brickbreaker.js)
       desc: 'Inherited a buggy JavaFX codebase and resolved 40+ bugs — race conditions on simultaneous block destruction, inconsistent ball physics, and broken hitbox detection at high speeds. Refactored a monolithic structure into a focused package architecture, added JUnit 5 test coverage and thread synchronisation, and extended the game with a full UI system: menus, sound, and save/load persistence.',
       tags: ['Java 17', 'JavaFX', 'Maven', 'JUnit 5'],
     },

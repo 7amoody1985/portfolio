@@ -14,6 +14,7 @@ A fast, single-page developer/engineer portfolio — built from scratch with **v
 - Command palette (`Ctrl` / `Cmd` + `K`) for quick navigation
 - Animated neural-network background, typed hero role, scroll reveals
 - Optional animated metric rings + an interactive MRI segmentation demo for a featured project
+- Optional playable mini-game popup (vanilla `<canvas>`) — attach to any project with a `play` flag
 - Project cards with source-code and PDF-report links (auto-dimmed if a file is missing)
 - Fully responsive; respects `prefers-reduced-motion`
 
