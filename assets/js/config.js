@@ -81,10 +81,10 @@ const CONFIG = {
   /* ---- Skills (each card is a group with a list of tags) ---- */
   skills: [
     { group: 'Machine Learning & AI', items: ['PyTorch', 'YOLO', 'EfficientUNet++', 'Sentence-BERT', 'LlamaIndex', 'Ollama (local LLM)', 'NLP / QA models', 'Semantic embeddings', 'Eval: Dice · IoU · F1'] },
-    { group: 'Languages', items: ['Python', 'Kotlin', 'C++', 'PHP', 'JavaScript', 'SQL', 'HTML/CSS'] },
+    { group: 'Languages', items: ['Python', 'Java', 'Kotlin', 'C++', 'PHP', 'JavaScript', 'SQL', 'HTML/CSS'] },
     { group: 'Backend & Data', items: ['FastAPI', 'SQLAlchemy', 'REST API design', 'asyncio / aiohttp', 'Retrofit', 'MySQL', 'Firebase / Firestore'] },
     { group: 'Foundations', items: ['Data structures & algorithms', 'OOP design', 'SDLC', 'Observer · Repository · MVVM'] },
-    { group: 'Tools & Platforms', items: ['Git / GitHub', 'TensorBoard', 'CUDA', 'VS Code', 'JetBrains IDEs', 'Google Maps/Places APIs'] },
+    { group: 'Tools & Platforms', items: ['Git / GitHub', 'TensorBoard', 'CUDA', 'Maven', 'JUnit 5', 'VS Code', 'JetBrains IDEs', 'Google Maps/Places APIs'] },
   ],
 
   /* ---- Featured project (the large highlighted one). Set show:false to skip it. ---- */
@@ -162,14 +162,14 @@ const CONFIG = {
       tags: ['Vanilla JS', 'HTML / CSS', 'No frameworks', 'Responsive', 'a11y'],
     },
     {
-      title: 'Online Booking System',
-      kicker: 'Full-Stack Web App',
-      glyph: 'calendar',
+      title: 'Brick Breaker Game',
+      kicker: 'Refactor & Extension',
+      glyph: 'game',
       image: null,
-      repo: null,   // no public source code for this project
+      repo: 'https://github.com/7amoody1985/Basic-Brick-Breaker-Game',
       paper: null,
-      desc: 'A full-stack booking platform with user authentication, payment processing and role-based admin management. Built with reusable backend and frontend components to cut duplication, delivered iteratively within a cross-functional team.',
-      tags: ['PHP', 'MySQL', 'HTML/CSS'],
+      desc: 'Inherited a buggy JavaFX codebase and resolved 40+ bugs — race conditions on simultaneous block destruction, inconsistent ball physics, and broken hitbox detection at high speeds. Refactored a monolithic structure into a focused package architecture, added JUnit 5 test coverage and thread synchronisation, and extended the game with a full UI system: menus, sound, and save/load persistence.',
+      tags: ['Java 17', 'JavaFX', 'Maven', 'JUnit 5'],
     },
   ],
 
