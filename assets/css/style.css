@@ -304,6 +304,7 @@ main { position: relative; z-index: 1; }
 .featured__note { font-size: .9rem; color: var(--faint); margin: 20px 0; padding-left: 14px; border-left: 2px solid var(--border-2); }
 .featured__tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
 .featured__tags span { font-family: var(--mono); font-size: .76rem; padding: 4px 10px; border-radius: 7px; background: var(--card-2); border: 1px solid var(--border); color: var(--muted); }
+.featured__links { display: flex; flex-wrap: wrap; gap: 12px; }
 
 /* Metric rings */
 .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 8px; }
