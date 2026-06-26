@@ -152,6 +152,16 @@ const CONFIG = {
       tags: ['Kotlin', 'Jetpack Compose', 'Firestore', 'Retrofit', 'Google Maps API'],
     },
     {
+      title: 'Personal Portfolio Website',
+      kicker: 'Web · Built from scratch',
+      glyph: 'code',
+      image: null,
+      repo: 'https://github.com/7amoody1985/portfolio', // ← update if your repo name differs
+      paper: null,
+      desc: 'A fully custom single-page portfolio built from scratch with vanilla HTML, CSS and JavaScript — no frameworks, no build step, no dependencies. Features a command palette (Ctrl/Cmd+K), an animated neural-network background, scroll-reveal animations, and three switchable themes with localStorage persistence, all driven by a single data-driven config file. Includes an interactive MRI segmentation demo that visualises the Brain Tumor FYP pipeline for non-technical audiences. You\'re looking at it.',
+      tags: ['Vanilla JS', 'HTML / CSS', 'No frameworks', 'Responsive', 'a11y'],
+    },
+    {
       title: 'Online Booking System',
       kicker: 'Full-Stack Web App',
       glyph: 'calendar',

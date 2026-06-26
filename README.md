@@ -5,7 +5,7 @@ A fast, single-page developer/engineer portfolio — built from scratch with **v
 **The whole site is driven by one file: [`assets/js/config.js`](assets/js/config.js).** Fork it, fill in your details, drop in your PDFs/screenshots, and you have your own portfolio.
 
 > Currently configured for **Mohammed Dasouqi**.
-> 🔗 **Live:** add URL here once deployed
+> 🔗 **Live:** dasouqi.com
 
 ## Features
 

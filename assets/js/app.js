@@ -488,7 +488,12 @@ function commandPalette() {
   const L = CONFIG.links || {};
 
   const go = (hash) => { close(); document.querySelector(hash)?.scrollIntoView({ behavior: 'smooth' }); };
-  const open = (url) => { close(); window.open(url, url.startsWith('http') ? '_blank' : '_self'); };
+  const open = (url) => {
+    close();
+    const external = url.startsWith('http');
+    // 'noopener,noreferrer' prevents the opened page from accessing window.opener (reverse tabnabbing)
+    window.open(url, external ? '_blank' : '_self', external ? 'noopener,noreferrer' : '');
+  };
 
   const COMMANDS = [
     { icon: '◇', label: 'Go to About', hint: '01', action: () => go('#about') },
