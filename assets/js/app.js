@@ -154,7 +154,7 @@ function renderFeatured() {
 
   let media = '';
   if (f.demo === 'mri') media = mriDemoHTML();
-  else if (f.image) media = `<img class="featured__img" src="${f.image}" alt="${esc(f.title)} screenshot" loading="lazy" />`;
+  else if (f.image) media = `<img class="featured__img" src="${f.image}" alt="${esc(f.title)} screenshot" loading="lazy" decoding="async" />`;
 
   const metrics = (f.metrics && f.metrics.length) ? `
     <div class="metrics" id="metrics">
@@ -189,7 +189,7 @@ function renderProjects() {
     // Glyph sits behind; the screenshot (if any) layers on top. If the image
     // is missing/fails to load, wireImageFallbacks() removes it → glyph shows.
     const glyph = `<div class="pcard__glyph" style="color:var(--accent-2)">${GLYPHS[p.glyph] || GLYPHS.code}</div>`;
-    const img = p.image ? `<img src="${p.image}" alt="${esc(p.title)} screenshot" loading="lazy" />` : '';
+    const img = p.image ? `<img src="${p.image}" alt="${esc(p.title)} screenshot" loading="lazy" decoding="async" />` : '';
     return `
     <article class="pcard reveal" style="--rd:${i * 80}ms">
       <div class="pcard__cover" style="background:linear-gradient(150deg,var(--card-2),var(--card));">${glyph}${img}</div>
