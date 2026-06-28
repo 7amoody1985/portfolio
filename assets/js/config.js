@@ -42,7 +42,6 @@ const CONFIG = {
 
   /* ---- Hero (the first screen) ---- */
   hero: {
-    status: 'Available to join — Transferable Iqama, no new visa sponsorship needed', // '' to hide the pill
     name: 'Mohammed Dasouqi',
     roles: ['AI / ML Engineer', 'Data Engineer', 'Deep-Learning Builder', 'Backend Developer'], // typed out one by one
     tagline: 'I build <strong>production-grade intelligent systems</strong> — from deep-learning pipelines for medical imaging to NLP agents and data-driven backends. BSc (Hons) Software Engineering, University of Nottingham.', // HTML allowed
@@ -196,6 +195,7 @@ const CONFIG = {
     title: 'Let\'s build something <span class="accent">intelligent</span>.', // HTML allowed
     sub: 'Open to AI/ML Engineer and Data Engineer roles. The fastest way to reach me is email.',
     extra: 'Arabic — Native · English — Fluent (bilingual)', // small line under the links; '' to hide
+    availability: 'Available to join — Transferable Iqama, no new visa sponsorship needed', // status pill at the very bottom; '' to hide
   },
 
   /* ---- Footer (left side is automatically "© YEAR — your name") ---- */

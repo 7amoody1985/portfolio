@@ -99,16 +99,15 @@ function renderHero() {
   const meta = (h.meta || []).map((m, i) =>
     `${i ? '<span class="sep">/</span>' : ''}<span>${HERO_ICONS[m.icon] || m.icon || ''} ${m.text}</span>`).join('');
   $('#hero-inner').innerHTML = `
-    ${h.status ? `<p class="hero__status"><span class="dot"></span> ${h.status}</p>` : ''}
-    <h1 class="hero__title">${esc(h.name || '')}</h1>
-    <p class="hero__role"><span id="typed-role"></span><span class="caret">▌</span></p>
-    <p class="hero__tag">${h.tagline || ''}</p>
-    <div class="hero__cta">
+    <h1 class="hero__title reveal" style="--rd:60ms">${esc(h.name || '')}</h1>
+    <p class="hero__role reveal" style="--rd:160ms"><span id="typed-role"></span><span class="caret">▌</span></p>
+    <p class="hero__tag reveal" style="--rd:260ms">${h.tagline || ''}</p>
+    <div class="hero__cta reveal" style="--rd:360ms">
       <a href="#projects" class="btn btn--primary">View Projects <span aria-hidden="true">↓</span></a>
       ${L.github ? `<a href="${L.github}" target="_blank" rel="noopener" class="btn btn--ghost">GitHub</a>` : ''}
       ${L.resume ? `<a href="${L.resume}" class="btn btn--ghost js-file-link" id="resume-link" target="_blank" rel="noopener">Résumé (PDF)</a>` : ''}
     </div>
-    ${meta ? `<div class="hero__meta">${meta}</div>` : ''}`;
+    ${meta ? `<div class="hero__meta reveal" style="--rd:460ms">${meta}</div>` : ''}`;
 }
 
 /* ================================================================== *
@@ -138,8 +137,8 @@ function renderAbout() {
  *  Render: skills
  * ================================================================== */
 function renderSkills() {
-  $('#skills-grid').innerHTML = (CONFIG.skills || []).map(s => `
-    <div class="skill-card reveal">
+  $('#skills-grid').innerHTML = (CONFIG.skills || []).map((s, i) => `
+    <div class="skill-card reveal" style="--rd:${i * 70}ms">
       <h3>${esc(s.group)}</h3>
       <div class="skill-tags">${(s.items || []).map(i => `<span>${esc(i)}</span>`).join('')}</div>
     </div>`).join('');
@@ -186,13 +185,13 @@ function renderFeatured() {
  *  Render: project grid
  * ================================================================== */
 function renderProjects() {
-  $('#proj-grid').innerHTML = (CONFIG.projects || []).map(p => {
+  $('#proj-grid').innerHTML = (CONFIG.projects || []).map((p, i) => {
     const cover = p.image
       ? `<img src="${p.image}" alt="${esc(p.title)} screenshot" loading="lazy" />`
       : `<div class="pcard__glyph" style="color:var(--accent-2)">${GLYPHS[p.glyph] || GLYPHS.code}</div>`;
     const coverBg = p.image ? '' : 'background:linear-gradient(150deg,var(--card-2),var(--card));';
     return `
-    <article class="pcard reveal">
+    <article class="pcard reveal" style="--rd:${i * 80}ms">
       <div class="pcard__cover" style="${coverBg}">${cover}</div>
       <div class="pcard__body">
         ${p.kicker ? `<p class="featured__kicker">${esc(p.kicker)}</p>` : ''}
@@ -227,8 +226,8 @@ function wirePlayButtons() {
  *  Render: timeline
  * ================================================================== */
 function renderTimeline() {
-  $('#timeline').innerHTML = (CONFIG.timeline || []).map(t => `
-    <div class="tl-item reveal">
+  $('#timeline').innerHTML = (CONFIG.timeline || []).map((t, i) => `
+    <div class="tl-item reveal" style="--rd:${i * 90}ms">
       <p class="tl-item__when">${esc(t.when)}</p>
       <p class="tl-item__role">${esc(t.role)}</p>
       <p class="tl-item__org">${esc(t.org)}</p>
@@ -251,7 +250,8 @@ function renderContact() {
     ${c.sub ? `<p class="contact__sub">${c.sub}</p>` : ''}
     ${L.email ? `<a href="mailto:${L.email}" class="contact__mail">${esc(L.email)}</a>` : ''}
     ${links.length ? `<div class="contact__links">${links.join('')}</div>` : ''}
-    ${c.extra ? `<p class="contact__langs">${c.extra}</p>` : ''}`;
+    ${c.extra ? `<p class="contact__langs">${c.extra}</p>` : ''}
+    ${c.availability ? `<p class="hero__status contact__status"><span class="dot"></span> ${c.availability}</p>` : ''}`;
 }
 
 /* ================================================================== *
