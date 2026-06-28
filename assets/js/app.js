@@ -186,13 +186,13 @@ function renderFeatured() {
  * ================================================================== */
 function renderProjects() {
   $('#proj-grid').innerHTML = (CONFIG.projects || []).map((p, i) => {
-    const cover = p.image
-      ? `<img src="${p.image}" alt="${esc(p.title)} screenshot" loading="lazy" />`
-      : `<div class="pcard__glyph" style="color:var(--accent-2)">${GLYPHS[p.glyph] || GLYPHS.code}</div>`;
-    const coverBg = p.image ? '' : 'background:linear-gradient(150deg,var(--card-2),var(--card));';
+    // Glyph sits behind; the screenshot (if any) layers on top. If the image
+    // is missing/fails to load, wireImageFallbacks() removes it → glyph shows.
+    const glyph = `<div class="pcard__glyph" style="color:var(--accent-2)">${GLYPHS[p.glyph] || GLYPHS.code}</div>`;
+    const img = p.image ? `<img src="${p.image}" alt="${esc(p.title)} screenshot" loading="lazy" />` : '';
     return `
     <article class="pcard reveal" style="--rd:${i * 80}ms">
-      <div class="pcard__cover" style="${coverBg}">${cover}</div>
+      <div class="pcard__cover" style="background:linear-gradient(150deg,var(--card-2),var(--card));">${glyph}${img}</div>
       <div class="pcard__body">
         ${p.kicker ? `<p class="featured__kicker">${esc(p.kicker)}</p>` : ''}
         <h3 class="pcard__title">${esc(p.title)}</h3>
@@ -413,13 +413,23 @@ function scrollFx() {
   }, { threshold: 0.12 });
   document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 
-  const bar = $('#scroll-progress'), nav = $('#nav');
+  const nav = $('#nav');
   const sections = [...document.querySelectorAll('main section[id]')];
   const links = [...document.querySelectorAll('.nav__links a')];
+
+  // Back-to-top button with circular scroll-progress ring
+  const toTop = $('#to-top');
+  const ring = toTop && toTop.querySelector('.to-top__bar');
+  const C = 2 * Math.PI * 19;
+  if (ring) { ring.style.strokeDasharray = C; ring.style.strokeDashoffset = C; }
+  if (toTop) toTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
   function onScroll() {
     const st = window.scrollY;
     const docH = document.documentElement.scrollHeight - window.innerHeight;
-    bar.style.width = (docH > 0 ? st / docH * 100 : 0) + '%';
+    const p = docH > 0 ? st / docH : 0;
+    if (ring) ring.style.strokeDashoffset = C * (1 - p);
+    if (toTop) toTop.classList.toggle('show', st > 400);
     nav.classList.toggle('scrolled', st > 20);
     let current = sections[0]?.id;
     for (const s of sections) { if (st >= s.offsetTop - 140) current = s.id; }
@@ -427,6 +437,37 @@ function scrollFx() {
   }
   window.addEventListener('scroll', onScroll, { passive: true });
   onScroll();
+}
+
+/* ================================================================== *
+ *  Cursor-follow glow — site-wide (desktop pointers only)
+ * ================================================================== */
+function cursorGlow() {
+  const glow = $('#cursor-glow');
+  if (!glow) return;
+  if (window.matchMedia('(hover: none)').matches) return;            // skip touch
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  let raf = 0, x = 0, y = 0;
+  window.addEventListener('pointermove', (e) => {
+    x = e.clientX; y = e.clientY;                                    // viewport coords (glow is position:fixed)
+    document.body.classList.add('glow-on');
+    if (!raf) raf = requestAnimationFrame(() => {
+      glow.style.setProperty('--mx', x + 'px');
+      glow.style.setProperty('--my', y + 'px');
+      raf = 0;
+    });
+  });
+  document.addEventListener('mouseleave', () => document.body.classList.remove('glow-on'));
+}
+
+/* ================================================================== *
+ *  Project screenshots: drop to the generated glyph if the image is missing
+ * ================================================================== */
+function wireImageFallbacks() {
+  document.querySelectorAll('.pcard__cover img').forEach((img) => {
+    img.addEventListener('error', () => img.remove());
+    if (img.complete && img.naturalWidth === 0) img.remove(); // already failed before listener
+  });
 }
 
 /* ================================================================== *
@@ -571,6 +612,37 @@ function checkFiles() {
 }
 
 /* ================================================================== *
+ *  Analytics (GoatCounter) — optional, privacy-friendly.
+ *  Enabled by setting CONFIG.analytics.goatcounter. Gives visitors,
+ *  referrers (where people come from), top pages, plus outbound-link
+ *  and file-download events.
+ * ================================================================== */
+function analytics() {
+  const code = CONFIG.analytics && CONFIG.analytics.goatcounter;
+  if (!code) return;
+  const endpoint = /^https?:\/\//.test(code) ? code : `https://${code}.goatcounter.com/count`;
+
+  // Load the counter (auto-records the pageview)
+  const s = document.createElement('script');
+  s.async = true;
+  s.src = 'https://gc.zgo.at/count.js';
+  s.setAttribute('data-goatcounter', endpoint);
+  document.body.appendChild(s);
+
+  // Outbound links, file downloads and email clicks → custom events
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a[href]');
+    if (!a || !window.goatcounter || typeof window.goatcounter.count !== 'function') return;
+    const href = a.getAttribute('href') || '';
+    let path = null;
+    if (/^https?:\/\//.test(a.href) && a.hostname !== location.hostname) path = 'out: ' + a.hostname + a.pathname;
+    else if (/\.pdf($|\?)/i.test(href)) path = 'file: ' + href.split('/').pop();
+    else if (href.startsWith('mailto:')) path = 'email';
+    if (path) window.goatcounter.count({ path, title: 'event', event: true });
+  }, true);
+}
+
+/* ================================================================== *
  *  Init  —  render content first, then wire up behaviours
  * ================================================================== */
 document.addEventListener('DOMContentLoaded', () => {
@@ -596,9 +668,12 @@ document.addEventListener('DOMContentLoaded', () => {
   animateMetrics();
   mriDemo();
   scrollFx();
+  cursorGlow();
+  wireImageFallbacks();
   themeMenu();
   mobileNav();
   commandPalette();
   checkFiles();
   wirePlayButtons();
+  analytics();
 });

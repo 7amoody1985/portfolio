@@ -31,6 +31,15 @@ const CONFIG = {
   /* ---- Default colour theme: 'light' | 'professional' | 'neural' ---- */
   defaultTheme: 'light',
 
+  /* ---- Analytics (optional, privacy-friendly — no cookies) ----
+     GoatCounter: sign up free at https://www.goatcounter.com/signup and pick a
+     "code" — your dashboard becomes <code>.goatcounter.com. Put that code below
+     to enable visitor counts, REFERRERS (where people come from), top pages, plus
+     outbound-link and file-download events. Leave '' to disable analytics. */
+  analytics: {
+    goatcounter: '7amoody1985', // (just the code; not the full URL)
+  },
+
   /* ---- Links (reused in the hero, contact section and command palette) ---- */
   links: {
     github:   'https://github.com/7amoody1985',
@@ -124,7 +133,7 @@ const CONFIG = {
       title: 'Intelligent Web Crawler',
       kicker: 'AI Agent',
       glyph: 'crawler',
-      image: null,
+      image: 'assets/img/projects/web-crawler.png', // drop this file in (or set null for the glyph)
       repo: 'https://github.com/7amoody1985/intelligent-web-crawler',
       paper: 'assets/files/reports/intelligent-web-crawler.pdf',
       desc: 'A budget-aware async crawler that prioritises URLs dynamically — combining Sentence-BERT semantic scoring, anchor-text relevance weighting and a BERT-based QA snippet-extraction pipeline — to replace static breadth-first traversal. A closed-loop online fine-tuning system periodically re-trains both the embedding and snippet models on data collected mid-crawl, improving relevance in 80% of runs. Across 25 runs it averaged 95.4% precision, 85.6% recall and 90.1% F1 — beating breadth-first and TF-IDF baselines while holding semantic diversity above 60%.',
@@ -134,7 +143,7 @@ const CONFIG = {
       title: 'Chat SQL Agent',
       kicker: 'AI-Powered Web App',
       glyph: 'database',
-      image: null,
+      image: 'assets/img/projects/chat-sql.png',
       repo: 'https://github.com/7amoody1985/chat-sql-agent',
       paper: null,
       desc: 'A natural-language-to-SQL app that lets non-technical users query relational databases over a FastAPI backend. LlamaIndex + a locally hosted Ollama LLM handle schema reasoning and adaptive SQL generation — fully offline, context-aware, and with zero per-query API cost.',
@@ -144,7 +153,7 @@ const CONFIG = {
       title: 'AutoConnect',
       kicker: 'Android App',
       glyph: 'phone',
-      image: null,
+      image: 'assets/img/projects/autoconnect.png',
       repo: 'https://github.com/7amoody1985/AutoConnect',
       paper: 'assets/files/reports/autoconnect.pdf',
       desc: 'A feature-complete roadside-assistance app with a 4-layer service-oriented architecture, 8 screens and role-based access for customers, drivers and admins. Real-time driver tracking via Firestore listeners (Observer), 30s background sync, push notifications, and Google Directions/Places/Maps via a Repository pattern. Full Jetpack Compose UI.',
@@ -154,7 +163,7 @@ const CONFIG = {
       title: 'Personal Portfolio Website',
       kicker: 'Web · Built from scratch',
       glyph: 'code',
-      image: null,
+      image: 'assets/img/projects/portfolio.png',
       repo: 'https://github.com/7amoody1985/portfolio', // ← update if your repo name differs
       paper: null,
       desc: 'A fully custom single-page portfolio built from scratch with vanilla HTML, CSS and JavaScript — no frameworks, no build step, no dependencies. Features a command palette (Ctrl/Cmd+K), an animated neural-network background, scroll-reveal animations, and three switchable themes with localStorage persistence, all driven by a single data-driven config file. Includes an interactive MRI segmentation demo that visualises the Brain Tumor FYP pipeline for non-technical audiences. You\'re looking at it.',
@@ -164,7 +173,7 @@ const CONFIG = {
       title: 'Brick Breaker Game',
       kicker: 'Refactor & Extension',
       glyph: 'game',
-      image: null,
+      image: 'assets/img/projects/brick-breaker.png',
       repo: 'https://github.com/7amoody1985/Basic-Brick-Breaker-Game',
       paper: null,
       play: 'brick',   // adds a "▶ Play" button that opens the in-browser mini-game (brickbreaker.js)

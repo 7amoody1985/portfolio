@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- Security hardening (defense-in-depth for a static site) -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; connect-src 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; img-src 'self' data: https://*.goatcounter.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://gc.zgo.at; connect-src 'self' https://*.goatcounter.com; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
 
   <!-- Title/description below are also set from config.js at runtime.
@@ -15,6 +15,12 @@
   <meta property="og:type" content="website" />
   <meta property="og:title" content="Portfolio" id="og-title" />
   <meta property="og:description" content="Personal portfolio." id="og-description" />
+  <meta property="og:url" content="https://dasouqi.com/" />
+  <meta property="og:image" content="https://dasouqi.com/assets/img/og.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Mohammed Dasouqi — AI / ML Engineer" />
+  <meta name="twitter:card" content="summary_large_image" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -23,7 +29,7 @@
   <link rel="icon" id="favicon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90' font-family='monospace'%3E%E2%97%88%3C/text%3E%3C/svg%3E" />
 
   <!-- config.js must load before the anti-flash script so we know the default theme -->
-  <script src="assets/js/config.js?v=2.7"></script>
+  <script src="assets/js/config.js?v=2.9"></script>
 
   <!-- Apply saved (or default) theme before paint to avoid a flash of the wrong theme -->
   <script>
@@ -37,14 +43,14 @@
     })();
   </script>
 
-  <link rel="stylesheet" href="assets/css/style.css?v=2.7" />
+  <link rel="stylesheet" href="assets/css/style.css?v=2.9" />
 </head>
 <body>
   <!--  Animated neural-network background canvas  -->
   <canvas id="neural-bg" aria-hidden="true"></canvas>
 
-  <!-- Scroll progress bar -->
-  <div class="scroll-progress" id="scroll-progress" aria-hidden="true"></div>
+  <!-- Cursor-follow glow (site-wide) -->
+  <div class="cursor-glow" id="cursor-glow" aria-hidden="true"></div>
 
   <!--  Navigation  -->
   <header class="nav" id="nav">
@@ -145,11 +151,16 @@
     </div>
   </div>
 
+  <!-- Back-to-top button with a circular scroll-progress ring -->
+  <button class="to-top" id="to-top" aria-label="Back to top" title="Back to top">
+    <svg class="to-top__ring" viewBox="0 0 44 44" aria-hidden="true">
+      <circle class="to-top__track" cx="22" cy="22" r="19" />
+      <circle class="to-top__bar" cx="22" cy="22" r="19" />
+    </svg>
+    <span class="to-top__arrow" aria-hidden="true">↑</span>
+  </button>
+
   <script src="assets/js/brickbreaker.js?v=2.6" defer></script>
-<<<<<<< HEAD
-  <script src="assets/js/app.js?v=2.7" defer></script>
-=======
-  <script src="assets/js/app.js?v=2.3" defer></script>
->>>>>>> 6d8518d7dbf9cb502d2ac7808b2adcbbdbe3a91e
+  <script src="assets/js/app.js?v=2.9" defer></script>
 </body>
 </html>
