@@ -373,7 +373,7 @@ main { position: relative; z-index: 1; }
 .game-win__close:hover { color: var(--text); background: var(--card); }
 .game-stage { position: relative; background: var(--bg-2); }
 .game-canvas { display: block; width: 100%; height: auto; touch-action: none; }
-.game-overlay-msg { position: absolute; inset: 0; display: none; place-items: center; text-align: center; padding: 24px; font-family: var(--mono); font-size: .92rem; color: var(--text); background: color-mix(in srgb, var(--bg) 55%, transparent); }
+.game-overlay-msg { position: absolute; inset: 0; display: none; place-items: center; text-align: center; padding: 24px; font-family: var(--mono); font-size: .92rem; color: var(--text); background: color-mix(in srgb, var(--bg) 55%, transparent); pointer-events: none; }
 .game-foot { display: flex; align-items: center; gap: 14px; padding: 10px 14px; border-top: 1px solid var(--border); font-family: var(--mono); font-size: .78rem; color: var(--muted); }
 .game-foot [data-lives] { color: #ff5f7a; letter-spacing: 2px; }
 .game-hint { margin-left: auto; color: var(--faint); }

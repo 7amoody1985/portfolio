@@ -42,7 +42,7 @@ window.BrickGame = (function () {
         <div class="game-foot">
           <span data-score>Score 0</span>
           <span data-lives>♥♥♥</span>
-          <span class="game-hint">← →  /  mouse · Space to launch</span>
+          <span class="game-hint">drag / ← → · tap or Space to launch</span>
         </div>
       </div>`;
     document.body.appendChild(overlay);
@@ -178,9 +178,9 @@ window.BrickGame = (function () {
 
       scoreEl.textContent = 'Score ' + score;
       livesEl.textContent = lives > 0 ? '♥'.repeat(lives) : '—';
-      if (state === 'ready') msg('Click or press Space to launch');
-      else if (state === 'won') msg('You cleared it! 🎉  Click to play again');
-      else if (state === 'over') msg('Game over · Click to play again');
+      if (state === 'ready') msg('Tap or press Space to launch');
+      else if (state === 'won') msg('You cleared it! 🎉  Tap to play again');
+      else if (state === 'over') msg('Game over · Tap to play again');
       else msg('');
     }
     function msg(t) { if (!t) { msgEl.style.display = 'none'; } else { msgEl.textContent = t; msgEl.style.display = 'grid'; } }
