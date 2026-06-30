@@ -385,8 +385,32 @@ main { position: relative; z-index: 1; }
 .js-file-link.is-missing { opacity: .45; cursor: not-allowed; }
 
 /* "Play" button on a project card */
-.pcard__play { display: inline-flex; align-items: center; gap: 5px; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; color: var(--accent); font: inherit; font-weight: 600; transition: gap .2s; }
-.pcard__play:hover { gap: 9px; }
+.pcard__play {
+  display: inline-flex; align-items: center; gap: 6px;
+  position: relative; overflow: hidden;
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  border: 1.5px solid var(--accent);
+  padding: 7px 14px; border-radius: 9px; margin: 0;
+  cursor: pointer; color: var(--accent); font: inherit; font-weight: 600;
+  transition: gap .2s var(--ease), transform .2s var(--ease), box-shadow .25s, background .2s;
+  animation: play-card-glow 2.8s ease-in-out infinite;
+}
+.pcard__play:hover {
+  gap: 10px; animation: none;
+  transform: translateY(-2px);
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  box-shadow: 0 6px 20px -6px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.pcard__play::after {
+  content: ""; position: absolute; top: 0; left: -60%; width: 40%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.22), transparent);
+  transform: skewX(-20deg); transition: left .45s var(--ease);
+}
+.pcard__play:hover::after { left: 130%; }
+@keyframes play-card-glow {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent); }
+  50%       { box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 18%, transparent); }
+}
 
 /* ---------- Brick Breaker game popup ---------- */
 .game-modal { position: fixed; inset: 0; z-index: 300; display: grid; place-items: center; padding: 20px; }
@@ -404,6 +428,60 @@ main { position: relative; z-index: 1; }
 .game-foot { display: flex; align-items: center; gap: 14px; padding: 10px 14px; border-top: 1px solid var(--border); font-family: var(--mono); font-size: .78rem; color: var(--muted); }
 .game-foot [data-lives] { color: #ff5f7a; letter-spacing: 2px; }
 .game-hint { margin-left: auto; color: var(--faint); }
+
+/* ---------- Hero bored / game invite button ---------- */
+.hero__bored { margin-top: 40px; display: flex; justify-content: center; }
+
+.bored-btn {
+  position: relative;
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 13px 26px; border-radius: 999px;
+  cursor: pointer; font: inherit; font-size: .96rem; font-weight: 600; color: var(--text);
+  background: linear-gradient(var(--card), var(--card)) padding-box, var(--grad) border-box;
+  border: 2px solid transparent;
+  backdrop-filter: blur(10px);
+  transition: transform .25s var(--ease), box-shadow .3s;
+  animation: bored-float 3.8s ease-in-out infinite;
+}
+.bored-btn:hover {
+  animation: none;
+  transform: translateY(-5px) scale(1.04);
+  box-shadow: 0 18px 44px -14px color-mix(in srgb, var(--accent) 42%, transparent);
+}
+.bored-btn__ring {
+  position: absolute; inset: -8px; border-radius: inherit;
+  border: 1.5px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  opacity: 0; pointer-events: none;
+  animation: bored-ring 3s ease-out infinite;
+  animation-delay: .6s;
+}
+.bored-btn:hover .bored-btn__ring { animation: none; opacity: 0; }
+.bored-btn__arr {
+  display: inline-block; color: var(--accent);
+  transition: transform .25s var(--ease);
+}
+.bored-btn:hover .bored-btn__arr { transform: translateX(7px); }
+.bored-btn__icon {
+  display: inline-block; font-style: normal;
+  animation: bored-wiggle 3.5s ease-in-out infinite;
+  animation-delay: 1.2s;
+}
+.bored-btn:hover .bored-btn__icon { animation: none; }
+
+@keyframes bored-float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-7px); }
+}
+@keyframes bored-ring {
+  0%   { opacity: .6; transform: scale(.96); }
+  100% { opacity: 0; transform: scale(1.18); }
+}
+@keyframes bored-wiggle {
+  0%, 75%, 100% { transform: rotate(0deg); }
+  80%  { transform: rotate(-14deg); }
+  88%  { transform: rotate(12deg); }
+  95%  { transform: rotate(-6deg); }
+}
 
 /* ---------- Timeline ---------- */
 .timeline { position: relative; max-width: 820px; }
@@ -484,3 +562,6 @@ main { position: relative; z-index: 1; }
 .to-top__bar { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linecap: round; transition: stroke-dashoffset .12s linear; }
 .to-top__arrow { font-size: 1.15rem; line-height: 1; color: var(--text); }
 @media (prefers-reduced-motion: reduce) { .to-top { transition: opacity .3s; } }
+@media (prefers-reduced-motion: reduce) {
+  .bored-btn, .bored-btn__ring, .bored-btn__icon, .pcard__play { animation: none; }
+}

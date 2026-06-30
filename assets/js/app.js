@@ -107,7 +107,15 @@ function renderHero() {
       ${L.github ? `<a href="${L.github}" target="_blank" rel="noopener" class="btn btn--ghost">GitHub</a>` : ''}
       ${L.resume ? `<a href="${L.resume}" class="btn btn--ghost js-file-link" id="resume-link" target="_blank" rel="noopener">Résumé (PDF)</a>` : ''}
     </div>
-    ${meta ? `<div class="hero__meta reveal" style="--rd:460ms">${meta}</div>` : ''}`;
+    ${meta ? `<div class="hero__meta reveal" style="--rd:460ms">${meta}</div>` : ''}
+    <div class="hero__bored reveal" style="--rd:580ms">
+      <button type="button" class="bored-btn" data-play="brick" aria-label="Play Brick Breaker game">
+        <span class="bored-btn__ring" aria-hidden="true"></span>
+        <span class="bored-btn__icon" aria-hidden="true">🎮</span>
+        <span>Are you bored? Play a game</span>
+        <span class="bored-btn__arr" aria-hidden="true">→</span>
+      </button>
+    </div>`;
 }
 
 /* ================================================================== *
@@ -213,9 +221,9 @@ function projectLinks(p) {
   return out.join('');
 }
 
-/* Wire up the "▶ Play" buttons (currently: Brick Breaker mini-game) */
+/* Wire up all [data-play] buttons — project card + hero bored button */
 function wirePlayButtons() {
-  document.getElementById('proj-grid').addEventListener('click', (e) => {
+  document.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-play]');
     if (!btn) return;
     if (btn.dataset.play === 'brick' && window.BrickGame) window.BrickGame.open();
