@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="professional">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,6 +7,8 @@
   <!-- Security hardening (defense-in-depth for a static site) -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; img-src 'self' data: https://*.goatcounter.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://gc.zgo.at; connect-src 'self' https://*.goatcounter.com; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <!-- Tints the mobile browser chrome; kept in sync with the theme by applyTheme() -->
+  <meta name="theme-color" id="meta-theme-color" content="#0e0f12" />
 
   <!-- Title/description below are also set from config.js at runtime.
        Edit assets/js/config.js to change the site; these are just fallbacks. -->
@@ -27,24 +29,24 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="icon" id="favicon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90' font-family='monospace'%3E%E2%97%88%3C/text%3E%3C/svg%3E" />
+  <link rel="icon" id="favicon" type="image/svg+xml" href="assets/img/favicon.svg" />
 
   <!-- config.js must load before the anti-flash script so we know the default theme -->
-  <script src="assets/js/config.js?v=2.9"></script>
+  <script src="assets/js/config.js?v=3.4"></script>
 
   <!-- Apply saved (or default) theme before paint to avoid a flash of the wrong theme -->
   <script>
     (function () {
       try {
         var valid = ['professional', 'neural', 'light'];
-        var fallback = (window.CONFIG && CONFIG.defaultTheme) || 'light';
+        var fallback = (window.CONFIG && CONFIG.defaultTheme) || 'professional';
         var t = localStorage.getItem('mdtheme');
         document.documentElement.setAttribute('data-theme', valid.indexOf(t) > -1 ? t : fallback);
       } catch (e) {}
     })();
   </script>
 
-  <link rel="stylesheet" href="assets/css/style.css?v=2.9" />
+  <link rel="stylesheet" href="assets/css/style.css?v=3.4" />
 </head>
 <body>
   <!--  Animated neural-network background canvas  -->
@@ -69,14 +71,14 @@
       </button>
       <div class="theme-menu" id="theme-menu">
         <button class="theme-menu__btn" id="theme-btn" aria-haspopup="listbox" aria-expanded="false" aria-label="Choose colour theme">
-          <span class="theme-swatch sw-light" data-sw></span>
-          <span class="theme-menu__label" data-label>Light</span>
+          <span class="theme-swatch sw-professional" data-sw></span>
+          <span class="theme-menu__label" data-label>Graphite Gold</span>
           <svg class="theme-menu__chev" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
         <ul class="theme-menu__list" id="theme-list" role="listbox" aria-label="Colour theme">
-          <li role="option" data-theme-value="light" aria-selected="true"><span class="theme-swatch sw-light"></span>Light</li>
-          <li role="option" data-theme-value="professional" aria-selected="false"><span class="theme-swatch sw-professional"></span>Subtle Dark</li>
-          <li role="option" data-theme-value="neural" aria-selected="false"><span class="theme-swatch sw-neural"></span>Colorful Dark</li>
+          <li role="option" data-theme-value="light" aria-selected="false"><span class="theme-swatch sw-light"></span>Porcelain</li>
+          <li role="option" data-theme-value="professional" aria-selected="true"><span class="theme-swatch sw-professional"></span>Graphite Gold</li>
+          <li role="option" data-theme-value="neural" aria-selected="false"><span class="theme-swatch sw-neural"></span>Aurora</li>
         </ul>
       </div>
       <button class="nav__burger" id="nav-burger" aria-label="Open menu"><span></span><span></span><span></span></button>
@@ -89,6 +91,9 @@
       <div class="hero__inner" id="hero-inner"><!-- rendered from config --></div>
       <a href="#about" class="hero__scroll" aria-label="Scroll down"><span></span></a>
     </section>
+
+    <!--  Tech marquee strip (items from CONFIG.marquee)  -->
+    <div class="marquee" id="marquee" aria-hidden="true"><div class="marquee__track" id="marquee-track"></div></div>
 
     <!--  ABOUT  -->
     <section class="section" id="about" aria-labelledby="title-about">
@@ -161,7 +166,8 @@
     <span class="to-top__arrow" aria-hidden="true">↑</span>
   </button>
 
-  <script src="assets/js/brickbreaker.js?v=2.6" defer></script>
-  <script src="assets/js/app.js?v=2.9" defer></script>
+  <script src="assets/js/brickbreaker.js?v=2.7" defer></script>
+  <script src="assets/js/demos.js?v=3.1" defer></script>
+  <script src="assets/js/app.js?v=3.4" defer></script>
 </body>
 </html>

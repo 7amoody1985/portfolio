@@ -18,18 +18,29 @@ const CONFIG = {
   meta: {
     title: 'Mohammed Dasouqi — AI / ML Engineer',
     description: 'Mohammed Dasouqi — AI/ML Engineer building production-grade intelligent systems: deep learning for medical imaging, NLP & semantic-search pipelines, and data-driven backends.',
-    favicon: '◈', // one character/emoji used as the browser-tab icon
+    favicon: 'MD', // 1–3 characters, rendered as a gold-on-graphite tile in the browser tab
+    // Extra facts for the JSON-LD Person schema (richer Google results).
+    // Any field can be '' to omit it.
+    schema: {
+      university: 'University of Nottingham',
+      locality: 'Riyadh',
+      country: 'SA',
+    },
   },
 
   /* ---- Top-left logo ---- */
   brand: {
-    monogram: '',         // small symbol before your name ('' to hide)
+    monogram: 'MD',        // 1–3 letters shown as the gold tile logo before your name ('' to hide)
     pre: 'Mohammed',       // text before the accent space
     post: 'Dasouqi',       // text after the accent space
   },
 
-  /* ---- Default colour theme: 'light' | 'professional' | 'neural' ---- */
-  defaultTheme: 'light',
+  /* ---- Default colour theme ----
+     'light' = Porcelain · 'professional' = Graphite Gold · 'neural' = Aurora */
+  defaultTheme: 'professional',
+
+  /* ---- Tech marquee (the scrolling strip under the hero). [] to hide. ---- */
+  marquee: ['PyTorch', 'FastAPI', 'YOLO', 'Sentence-BERT', 'LlamaIndex', 'Ollama', 'Python', 'Kotlin', 'SQL', 'CUDA', 'Jetpack Compose', 'Firestore', 'TensorBoard', 'asyncio'],
 
   /* ---- Analytics (optional, privacy-friendly — no cookies) ----
      GoatCounter: sign up free at https://www.goatcounter.com/signup and pick a
@@ -114,7 +125,8 @@ const CONFIG = {
     repo: 'https://github.com/7amoody1985/Brain-Tumor-Detection-Segmentation', // '' to hide
     paper: 'assets/files/reports/brain-tumor-detection-segmentation.pdf',       // '' to hide
     // Left-hand visual. Options:
-    //   demo: 'mri'  → the built-in interactive MRI segmentation demo
+    //   demo: 'mri'  → the built-in animated two-stage pipeline demo
+    //                  (detect → crop → segment; auto-plays on scroll, replayable)
     //   image: 'assets/img/projects/foo.png' → your own screenshot
     //   both empty   → no visual (the card becomes single-column)
     demo: 'mri',
@@ -127,6 +139,10 @@ const CONFIG = {
        paper : PDF path, or null to hide the report link
        image : screenshot path, or null to use generated cover art
        glyph : cover art icon when no image — 'crawler' | 'database' | 'phone' | 'calendar' | 'code'
+       demo  : 'crawler' | 'sql' — adds a "▶ Live demo" button that opens the
+               built-in interactive in-browser demo (see assets/js/demos.js)
+       size  : 'lg' | 'sm' — makes the card wider or narrower than its
+               neighbours in the grid (omit for a normal card)
      A project with neither repo nor paper shows a small muted note instead. */
   projects: [
     {
@@ -136,6 +152,8 @@ const CONFIG = {
       image: 'assets/img/projects/web-crawler.png', // drop this file in (or set null for the glyph)
       repo: 'https://github.com/7amoody1985/intelligent-web-crawler',
       paper: 'assets/files/reports/intelligent-web-crawler.pdf',
+      demo: 'crawler',   // "▶ Live demo": in-browser crawl simulation (semantic vs BFS)
+      size: 'lg',        // wider card — flagship project after the featured one
       desc: 'A budget-aware async crawler that prioritises URLs dynamically — combining Sentence-BERT semantic scoring, anchor-text relevance weighting and a BERT-based QA snippet-extraction pipeline — to replace static breadth-first traversal. A closed-loop online fine-tuning system periodically re-trains both the embedding and snippet models on data collected mid-crawl, improving relevance in 80% of runs. Across 25 runs it averaged 95.4% precision, 85.6% recall and 90.1% F1 — beating breadth-first and TF-IDF baselines while holding semantic diversity above 60%.',
       tags: ['Python', 'asyncio / aiohttp', 'Sentence-BERT', 'BERT QA', 'Online fine-tuning'],
     },
@@ -146,6 +164,7 @@ const CONFIG = {
       image: 'assets/img/projects/chat-sql.png',
       repo: 'https://github.com/7amoody1985/chat-sql-agent',
       paper: null,
+      demo: 'sql',       // "▶ Live demo": mock NL→SQL chat over an in-browser table
       desc: 'A natural-language-to-SQL app that lets non-technical users query relational databases over a FastAPI backend. LlamaIndex + a locally hosted Ollama LLM handle schema reasoning and adaptive SQL generation — fully offline, context-aware, and with zero per-query API cost.',
       tags: ['Python', 'FastAPI', 'LlamaIndex', 'Ollama', 'SQLAlchemy'],
     },
@@ -166,7 +185,8 @@ const CONFIG = {
       image: 'assets/img/projects/portfolio.png',
       repo: 'https://github.com/7amoody1985/portfolio', // ← update if your repo name differs
       paper: null,
-      desc: 'A fully custom single-page portfolio built from scratch with vanilla HTML, CSS and JavaScript — no frameworks, no build step, no dependencies. Features a command palette (Ctrl/Cmd+K), an animated neural-network background, scroll-reveal animations, and three switchable themes with localStorage persistence, all driven by a single data-driven config file. Includes an interactive MRI segmentation demo that visualises the Brain Tumor FYP pipeline for non-technical audiences. You\'re looking at it.',
+      size: 'sm',        // narrower card
+      desc: 'This site — vanilla HTML/CSS/JS, no frameworks, no build step. One config file drives everything: three themes, a command palette (Ctrl/Cmd+K), scroll-driven section transitions, and interactive in-browser demos of my projects (MRI pipeline, crawler simulation, NL→SQL chat).',
       tags: ['Vanilla JS', 'HTML / CSS', 'No frameworks', 'Responsive', 'a11y'],
     },
     {

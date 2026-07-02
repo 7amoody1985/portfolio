@@ -52,6 +52,7 @@ window.BrickGame = (function () {
     document.addEventListener('keydown', onEsc);
     const stopGame = start(overlay.querySelector('.game-canvas'), overlay);
     cleanup = () => { stopGame(); document.removeEventListener('keydown', onEsc); };
+    if (window.FocusTrap) window.FocusTrap.activate(overlay.querySelector('.game-win'));
   }
 
   function close() {
@@ -60,6 +61,7 @@ window.BrickGame = (function () {
     overlay.remove();
     overlay = null; cleanup = null;
     document.body.style.overflow = '';
+    if (window.FocusTrap) window.FocusTrap.release();
   }
 
   function start(canvas, root) {

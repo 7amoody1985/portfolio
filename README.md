@@ -10,13 +10,19 @@ A fast, single-page developer/engineer portfolio — built from scratch with **v
 ## Features
 
 - One-file configuration — edit `config.js`, nothing else
-- Three colour themes — **Light** (default), **Subtle Dark**, **Colorful Dark** — saved between visits
-- Command palette (`Ctrl` / `Cmd` + `K`) for quick navigation
-- Animated neural-network background, typed hero role, scroll reveals
-- Optional animated metric rings + an interactive MRI segmentation demo for a featured project
+- Three colour themes, saved between visits — **Graphite Gold** (default, graphite + champagne gold), **Porcelain** (warm light), **Aurora** (teal→blue→fuchsia dark)
+- **Interactive in-browser project demos** (all vanilla JS, no network calls):
+  - an animated two-stage **MRI pipeline** (detect → crop → segment) on the featured project
+  - a live **web-crawler simulation** — semantic-priority vs breadth-first, with a relevance comparison
+  - a mock **natural-language → SQL chat** whose results are genuinely computed in the browser
+- Command palette (`Ctrl` / `Cmd` + `K`) — navigation, themes, demos and the game
+- **Scroll-reactive neural-network background** — depth-based parallax layers that stretch into "warp" motion streaks while you scroll
+- Scroll-driven section transitions, per-letter gradient hero animation, tech marquee, 3D-tilt project cards, magnetic buttons
+- Consistent brand mark from one config value — monogram tile in the nav, favicon and OG share the same design
+- Optional animated metric rings for the featured project
 - Optional playable mini-game popup (vanilla `<canvas>`) — attach to any project with a `play` flag
-- Project cards with source-code and PDF-report links (auto-dimmed if a file is missing)
-- Fully responsive; respects `prefers-reduced-motion`
+- Project cards with source-code and PDF-report links (auto-dimmed if a file is missing), and per-card sizing (`size: 'lg' | 'sm'`)
+- SEO & a11y built in: JSON-LD Person schema, `theme-color` synced to the active theme, focus-trapped modals, fully responsive, respects `prefers-reduced-motion`
 
 ---
 
@@ -32,7 +38,7 @@ A fast, single-page developer/engineer portfolio — built from scratch with **v
 
 That's it — no other file needs editing for normal use.
 
-> After editing `config.js`, `style.css` or `app.js`, bump the `?v=` number on their tags in `index.html` so browsers fetch the new version instead of a cached copy.
+> After editing `config.js`, `style.css`, `app.js` or `demos.js`, bump the `?v=` number on their tags in `index.html` so browsers fetch the new version instead of a cached copy.
 
 ## Run locally
 
@@ -61,9 +67,11 @@ Also works as-is on Netlify or Vercel.
 │  ├─ css/style.css        # styles + theme variables
 │  ├─ js/
 │  │  ├─ config.js         # ← all your content lives here
-│  │  └─ app.js            # rendering engine (rarely needs editing)
+│  │  ├─ app.js            # rendering engine (rarely needs editing)
+│  │  ├─ demos.js          # interactive project demos (crawler sim, NL→SQL chat)
+│  │  └─ brickbreaker.js   # the mini-game popup
 │  ├─ files/               # résumé + project reports (PDF)
-│  └─ img/projects/        # project screenshots (optional)
+│  └─ img/                 # favicon.svg, og.png, projects/ screenshots
 └─ README.md
 ```
 

@@ -11,6 +11,37 @@ const $ = (sel) => document.querySelector(sel);
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const telHref = (p) => 'tel:' + String(p).replace(/[^\d+]/g, '');
 
+/* Focus trap for modals (palette / demos / game). One modal at a time.
+   activate(root) keeps Tab inside root and remembers the previously focused
+   element; release() removes the trap and restores focus. */
+const FocusTrap = (() => {
+  let root = null, prev = null;
+  function onKey(e) {
+    if (e.key !== 'Tab' || !root) return;
+    const list = [...root.querySelectorAll(
+      'a[href], button:not([disabled]), input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])'
+    )].filter(el => el.offsetWidth || el.offsetHeight || el.getClientRects().length);
+    if (!list.length) return;
+    const first = list[0], last = list[list.length - 1];
+    if (e.shiftKey && (document.activeElement === first || !root.contains(document.activeElement))) {
+      e.preventDefault(); last.focus();
+    } else if (!e.shiftKey && (document.activeElement === last || !root.contains(document.activeElement))) {
+      e.preventDefault(); first.focus();
+    }
+  }
+  return {
+    activate(el) { root = el; prev = document.activeElement; document.addEventListener('keydown', onKey, true); },
+    release() {
+      if (!root) return;
+      document.removeEventListener('keydown', onKey, true);
+      root = null;
+      if (prev && typeof prev.focus === 'function') { try { prev.focus(); } catch (e) {} }
+      prev = null;
+    },
+  };
+})();
+window.FocusTrap = FocusTrap; // used by demos.js and brickbreaker.js
+
 /* Inline SVGs ------------------------------------------------------------ */
 const HERO_ICONS = {
   pin:  '<svg class="hm-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.4 7-12a7 7 0 1 0-14 0c0 5.6 7 12 7 12z"/><circle cx="12" cy="9" r="2.6"/></svg>',
@@ -27,11 +58,17 @@ const GLYPHS = {
   game:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="7" width="20" height="10" rx="5"/><path d="M7 12h3M8.5 10.5v3"/><circle cx="15.5" cy="11.5" r=".7" fill="currentColor" stroke="none"/><circle cx="18" cy="13" r=".7" fill="currentColor" stroke="none"/></svg>',
 };
 
-/* The built-in interactive MRI segmentation demo (featured.demo === 'mri') */
+/* The built-in animated two-stage pipeline demo (featured.demo === 'mri').
+   Plays detect → crop → segment; stages are driven by [data-stage] + CSS. */
 function mriDemoHTML() {
   return `
-  <div class="mri" id="mri-demo">
-    <svg viewBox="0 0 320 320" class="mri__svg" role="img" aria-label="Illustrative MRI segmentation demo">
+  <div class="mri" id="mri-demo" data-stage="0">
+    <div class="mri__steps" aria-hidden="true">
+      <span data-step="1">01 detect</span><i></i>
+      <span data-step="2">02 crop</span><i></i>
+      <span data-step="3">03 segment</span>
+    </div>
+    <svg viewBox="0 0 320 320" class="mri__svg" role="img" aria-label="Illustrative two-stage MRI pipeline demo: detection, crop, segmentation">
       <defs>
         <radialGradient id="brainGrad" cx="50%" cy="45%" r="60%">
           <stop offset="0%" stop-color="#3a4256"/><stop offset="70%" stop-color="#222838"/><stop offset="100%" stop-color="#141824"/>
@@ -48,14 +85,19 @@ function mriDemoHTML() {
         <path d="M85 195 q35 -25 70 0 t70 0"/><path d="M100 235 q30 18 60 0 t60 0"/>
       </g>
       <circle class="mri__tumor" cx="205" cy="135" r="26" fill="url(#tumorGrad)" filter="url(#soft)"/>
-      <g class="mri__overlay">
-        <circle cx="205" cy="135" r="28" fill="#22d3ee" opacity=".32"/>
-        <circle cx="205" cy="135" r="28" fill="none" stroke="#22d3ee" stroke-width="2"/>
-        <rect x="168" y="98" width="74" height="74" fill="none" stroke="#c084fc" stroke-width="2" stroke-dasharray="5 4"/>
-        <text x="168" y="92" class="mri__label" fill="#c084fc">tumor 0.98</text>
+      <!-- stage 2: everything outside the detected box dims (evenodd hole) -->
+      <path class="mri__dim" d="M0 0 H320 V320 H0 Z M168 98 h74 v74 h-74 Z" fill="#04060c" fill-rule="evenodd"/>
+      <!-- stage 1: detection box draws itself (dashoffset = box perimeter 296) -->
+      <rect class="mri__box" x="168" y="98" width="74" height="74" fill="none" stroke="var(--accent-3)" stroke-width="2" stroke-dasharray="296" stroke-dashoffset="296"/>
+      <text class="mri__boxlabel" x="168" y="92" fill="var(--accent-3)">tumor 0.98</text>
+      <!-- stage 3: segmentation mask paints in -->
+      <g class="mri__mask">
+        <circle cx="205" cy="135" r="28" fill="var(--accent)" opacity=".35"/>
+        <circle cx="205" cy="135" r="28" fill="none" stroke="var(--accent)" stroke-width="2"/>
       </g>
+      <text class="mri__dice" x="205" y="192" fill="var(--accent)" text-anchor="middle">Dice 0.94</text>
     </svg>
-    <button class="mri__toggle" id="mri-toggle" aria-pressed="true">Hide prediction</button>
+    <button class="mri__toggle" id="mri-run">▶ Run pipeline</button>
     <span class="mri__caption">Illustrative demo — not real patient data</span>
   </div>`;
 }
@@ -68,16 +110,60 @@ function renderMeta() {
   if (m.title) { document.title = m.title; setAttr('#og-title', 'content', m.title); }
   if (m.description) { setAttr('#meta-description', 'content', m.description); setAttr('#og-description', 'content', m.description); }
   if (m.favicon) {
-    const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90' font-family='monospace'>${m.favicon}</text></svg>`;
+    // Branded tile: dark rounded square + gold-gradient text (1–3 chars).
+    const t = String(m.favicon);
+    const size = t.length === 1 ? 58 : t.length === 2 ? 46 : 32;
+    const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>` +
+      `<defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>` +
+      `<stop offset='0' stop-color='#d6a84e'/><stop offset='1' stop-color='#f4e5bd'/></linearGradient></defs>` +
+      `<rect width='100' height='100' rx='22' fill='#16181d'/>` +
+      `<text x='50' y='52' dominant-baseline='central' text-anchor='middle' ` +
+      `font-family='Segoe UI, Arial, sans-serif' font-weight='800' font-size='${size}' fill='url(#g)'>${esc(t)}</text></svg>`;
     setAttr('#favicon', 'href', 'data:image/svg+xml,' + encodeURIComponent(svg));
   }
+}
+
+/* JSON-LD Person schema for richer search results. Built from CONFIG:
+   name/roles/description/links + the optional CONFIG.meta.schema block. */
+function injectJsonLd() {
+  const h = CONFIG.hero || {}, L = CONFIG.links || {}, m = CONFIG.meta || {}, x = m.schema || {};
+  const canonical = document.querySelector('link[rel="canonical"]');
+  const sameAs = [L.github, L.linkedin].filter(Boolean);
+  const data = {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    name: h.name || undefined,
+    url: (canonical && canonical.href) || undefined,
+    jobTitle: (h.roles && h.roles[0]) || undefined,
+    description: m.description || undefined,
+    email: L.email ? 'mailto:' + L.email : undefined,
+    sameAs: sameAs.length ? sameAs : undefined,
+    alumniOf: x.university ? { '@type': 'CollegeOrUniversity', name: x.university } : undefined,
+    address: x.locality ? { '@type': 'PostalAddress', addressLocality: x.locality, addressCountry: x.country || undefined } : undefined,
+  };
+  const s = document.createElement('script');
+  s.type = 'application/ld+json';
+  s.textContent = JSON.stringify(data); // stringify drops undefined fields
+  document.head.appendChild(s);
 }
 function setAttr(sel, attr, val) { const el = $(sel); if (el) el.setAttribute(attr, val); }
 
 function renderBrand() {
   const b = CONFIG.brand || {};
-  $('#nav-logo').innerHTML =
-    `${b.monogram ? `<span class="nav__mono">${b.monogram}</span> ` : ''}${b.pre || ''}<span class="accent"> </span>${b.post || ''}`;
+  let mark = '';
+  if (b.monogram) {
+    // Same gold-on-graphite tile as the favicon, inline in the nav.
+    const t = String(b.monogram);
+    const size = t.length === 1 ? 58 : t.length === 2 ? 46 : 32;
+    mark = `<svg class="nav__mark" viewBox="0 0 100 100" aria-hidden="true">
+      <defs><linearGradient id="nav-mark-g" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#d6a84e"/><stop offset="1" stop-color="#f4e5bd"/>
+      </linearGradient></defs>
+      <rect width="100" height="100" rx="24" fill="#16181d"/>
+      <text x="50" y="52" dominant-baseline="central" text-anchor="middle" font-weight="800" font-size="${size}" fill="url(#nav-mark-g)">${esc(t)}</text>
+    </svg>`;
+  }
+  $('#nav-logo').innerHTML = `${mark}<span class="nav__name">${b.pre || ''}<span class="accent"> </span>${b.post || ''}</span>`;
 }
 
 function renderSectionTitles() {
@@ -94,12 +180,26 @@ function renderFooter() {
 /* ================================================================== *
  *  Render: hero
  * ================================================================== */
+/* Split the name into per-letter spans: each gets a stagger index (--ci) and a
+   solid colour sampled along the accent gradient (robust with animation, unlike
+   background-clip:text). Screen readers get the plain name via .sr-only. */
+function heroLetters(name) {
+  const chars = String(name).split('');
+  return chars.map((ch, i) => {
+    const f = chars.length > 1 ? i / (chars.length - 1) : 0;
+    const seg = f < .5
+      ? `--c1:var(--accent);--c2:var(--accent-2);--p:${(f * 2).toFixed(3)}`
+      : `--c1:var(--accent-2);--c2:var(--accent-3);--p:${((f - .5) * 2).toFixed(3)}`;
+    return `<span class="ht-ch" style="--ci:${i};${seg}">${ch === ' ' ? '&nbsp;' : esc(ch)}</span>`;
+  }).join('');
+}
+
 function renderHero() {
   const h = CONFIG.hero || {}, L = CONFIG.links || {};
   const meta = (h.meta || []).map((m, i) =>
     `${i ? '<span class="sep">/</span>' : ''}<span>${HERO_ICONS[m.icon] || m.icon || ''} ${m.text}</span>`).join('');
   $('#hero-inner').innerHTML = `
-    <h1 class="hero__title reveal" style="--rd:60ms">${esc(h.name || '')}</h1>
+    <h1 class="hero__title reveal" style="--rd:60ms"><span aria-hidden="true">${heroLetters(h.name || '')}</span><span class="sr-only">${esc(h.name || '')}</span></h1>
     <p class="hero__role reveal" style="--rd:160ms"><span id="typed-role"></span><span class="caret">▌</span></p>
     <p class="hero__tag reveal" style="--rd:260ms">${h.tagline || ''}</p>
     <div class="hero__cta reveal" style="--rd:360ms">
@@ -198,8 +298,9 @@ function renderProjects() {
     // is missing/fails to load, wireImageFallbacks() removes it → glyph shows.
     const glyph = `<div class="pcard__glyph" style="color:var(--accent-2)">${GLYPHS[p.glyph] || GLYPHS.code}</div>`;
     const img = p.image ? `<img src="${p.image}" alt="${esc(p.title)} screenshot" loading="lazy" decoding="async" />` : '';
+    const size = p.size === 'lg' || p.size === 'sm' ? ` pcard--${p.size}` : '';
     return `
-    <article class="pcard reveal" style="--rd:${i * 80}ms">
+    <article class="pcard${size} reveal" style="--rd:${i * 80}ms">
       <div class="pcard__cover" style="background:linear-gradient(150deg,var(--card-2),var(--card));">${glyph}${img}</div>
       <div class="pcard__body">
         ${p.kicker ? `<p class="featured__kicker">${esc(p.kicker)}</p>` : ''}
@@ -215,18 +316,20 @@ function renderProjects() {
 function projectLinks(p) {
   const out = [];
   if (p.play) out.push(`<button type="button" class="pcard__play" data-play="${p.play}">▶ Play</button>`);
-  if (p.repo) out.push(`<a href="${p.repo}" target="_blank" rel="noopener">Source ↗</a>`);
-  if (p.paper) out.push(`<a class="js-file-link" href="${p.paper}" target="_blank" rel="noopener">Read report ↗</a>`);
+  if (p.demo) out.push(`<button type="button" class="pcard__play" data-demo="${p.demo}">▶ Live demo</button>`);
+  if (p.repo) out.push(`<a href="${p.repo}" target="_blank" rel="noopener">Source <span class="arr">↗</span></a>`);
+  if (p.paper) out.push(`<a class="js-file-link" href="${p.paper}" target="_blank" rel="noopener">Read report <span class="arr">↗</span></a>`);
   if (!out.length) out.push(`<span class="pcard__muted">Team / academic project — no public source</span>`);
   return out.join('');
 }
 
-/* Wire up all [data-play] buttons — project card + hero bored button */
+/* Wire up [data-play] (game) and [data-demo] (interactive demos) buttons */
 function wirePlayButtons() {
   document.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-play]');
-    if (!btn) return;
-    if (btn.dataset.play === 'brick' && window.BrickGame) window.BrickGame.open();
+    const play = e.target.closest('[data-play]');
+    if (play) { if (play.dataset.play === 'brick' && window.BrickGame) window.BrickGame.open(); return; }
+    const demo = e.target.closest('[data-demo]');
+    if (demo && window.Demos) window.Demos.open(demo.dataset.demo);
   });
 }
 
@@ -263,13 +366,18 @@ function renderContact() {
 }
 
 /* ================================================================== *
- *  Neural-network background
+ *  Neural-network background — scroll-reactive depth field.
+ *  Every node has a depth (z). Scrolling parallax-shifts nodes by depth
+ *  (deep nodes drift slower), and fast scrolling stretches them into
+ *  "warp" motion streaks whose length follows the scroll velocity.
  * ================================================================== */
 function neuralBackground() {
   const canvas = $('#neural-bg');
   const ctx = canvas.getContext('2d');
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const PARA = 0.22;          // parallax strength (× node depth)
   let w, h, nodes, mouse = { x: -9999, y: -9999 }, raf;
+  let scrollVel = 0, lastY = window.scrollY;
 
   function resize() {
     w = canvas.width = window.innerWidth;
@@ -279,29 +387,63 @@ function neuralBackground() {
       x: Math.random() * w, y: Math.random() * h,
       vx: (Math.random() - 0.5) * 0.4, vy: (Math.random() - 0.5) * 0.4,
       r: Math.random() * 1.6 + 0.6,
+      z: 0.35 + Math.random() * 0.65,   // depth: 0.35 (far) … 1 (near)
     }));
   }
   function accentRGB() {
     return getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#22d3ee';
   }
+  const wrapY = (v) => ((v % h) + h) % h;
+
   function tick() {
     ctx.clearRect(0, 0, w, h);
     const col = accentRGB();
+
+    // smoothed scroll velocity → warp-streak factor
+    const yNow = window.scrollY;
+    scrollVel += ((yNow - lastY) - scrollVel) * 0.12;
+    lastY = yNow;
+    const streak = Math.max(-46, Math.min(46, scrollVel));
+    const speed = Math.min(Math.abs(streak) / 46, 1);
+
+    // advance the simulation and compute parallax render positions
+    const px = [], py = [];
     for (let i = 0; i < nodes.length; i++) {
       const n = nodes[i];
       n.x += n.vx; n.y += n.vy;
       if (n.x < 0 || n.x > w) n.vx *= -1;
       if (n.y < 0 || n.y > h) n.vy *= -1;
-      const dx = n.x - mouse.x, dy = n.y - mouse.y, md = Math.hypot(dx, dy);
-      if (md < 120) { n.x += dx / md * 1.1; n.y += dy / md * 1.1; }
-      ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-      ctx.fillStyle = col; ctx.globalAlpha = 0.8; ctx.fill();
+      px[i] = n.x;
+      py[i] = wrapY(n.y - yNow * PARA * n.z);
+      const dx = px[i] - mouse.x, dy = py[i] - mouse.y, md = Math.hypot(dx, dy);
+      if (md > 0 && md < 120) { n.x += dx / md * 1.1; n.y += dy / md * 1.1; px[i] = n.x; }
+    }
+
+    for (let i = 0; i < nodes.length; i++) {
+      const n = nodes[i];
+      // links between render positions (slightly brighter while scrolling fast)
       for (let j = i + 1; j < nodes.length; j++) {
-        const m = nodes[j], d = Math.hypot(n.x - m.x, n.y - m.y);
+        const d = Math.hypot(px[i] - px[j], py[i] - py[j]);
         if (d < 130) {
-          ctx.beginPath(); ctx.moveTo(n.x, n.y); ctx.lineTo(m.x, m.y);
-          ctx.strokeStyle = col; ctx.globalAlpha = (1 - d / 130) * 0.25; ctx.lineWidth = 1; ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(px[i], py[i]); ctx.lineTo(px[j], py[j]);
+          ctx.strokeStyle = col; ctx.globalAlpha = (1 - d / 130) * (0.25 + speed * 0.15);
+          ctx.lineWidth = 1; ctx.stroke();
         }
+      }
+      // node: a dot at rest, a depth-scaled motion streak while scrolling
+      ctx.strokeStyle = ctx.fillStyle = col;
+      ctx.globalAlpha = 0.35 + n.z * 0.45;
+      if (Math.abs(streak) > 2.5) {
+        ctx.beginPath();
+        ctx.lineWidth = Math.max(1, n.r * 1.6 * n.z);
+        ctx.lineCap = 'round';
+        ctx.moveTo(px[i], py[i]);
+        ctx.lineTo(px[i], py[i] + streak * n.z * 1.4); // trail opposite to motion
+        ctx.stroke();
+      } else {
+        ctx.beginPath();
+        ctx.arc(px[i], py[i], n.r * (0.6 + n.z * 0.8), 0, Math.PI * 2);
+        ctx.fill();
       }
     }
     ctx.globalAlpha = 1;
@@ -400,16 +542,38 @@ function animateMetrics() {
 }
 
 /* ================================================================== *
- *  MRI demo toggle
+ *  MRI pipeline demo — staged animation (detect → crop → segment).
+ *  Auto-plays once when scrolled into view; replayable via the button.
  * ================================================================== */
 function mriDemo() {
-  const demo = $('#mri-demo'), btn = $('#mri-toggle');
+  const demo = $('#mri-demo'), btn = $('#mri-run');
   if (!demo || !btn) return;
-  btn.addEventListener('click', () => {
-    const hidden = demo.classList.toggle('hidden');
-    btn.textContent = hidden ? 'Show prediction' : 'Hide prediction';
-    btn.setAttribute('aria-pressed', String(!hidden));
-  });
+  const steps = demo.querySelectorAll('.mri__steps [data-step]');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let timers = [];
+
+  function setStage(n) {
+    demo.dataset.stage = n;
+    steps.forEach(s => s.classList.toggle('on', +s.dataset.step <= n));
+  }
+  function run() {
+    timers.forEach(clearTimeout); timers = [];
+    demo.classList.add('notrans'); // snap back to stage 0 without reverse animation
+    setStage(0);
+    if (reduce) { demo.classList.remove('notrans'); setStage(3); btn.textContent = '↻ Replay pipeline'; return; }
+    void demo.offsetWidth; // reflow so stage transitions restart cleanly
+    demo.classList.remove('notrans');
+    timers.push(setTimeout(() => setStage(1), 200));
+    timers.push(setTimeout(() => setStage(2), 1500));
+    timers.push(setTimeout(() => setStage(3), 2500));
+    timers.push(setTimeout(() => { btn.textContent = '↻ Replay pipeline'; }, 3300));
+  }
+  btn.addEventListener('click', run);
+  const io = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting) { io.disconnect(); run(); }
+  }, { threshold: 0.45 });
+  io.observe(demo);
+  window.__runMri = run; // used by the command palette
 }
 
 /* ================================================================== *
@@ -469,6 +633,58 @@ function cursorGlow() {
 }
 
 /* ================================================================== *
+ *  Tech marquee — infinite scrolling strip under the hero.
+ *  Items come from CONFIG.marquee ([] hides the strip); if the key is
+ *  absent entirely, short skill tags are used as a fallback.
+ * ================================================================== */
+function renderMarquee() {
+  const strip = $('#marquee'), track = $('#marquee-track');
+  if (!strip || !track) return;
+  let items = CONFIG.marquee;
+  if (!Array.isArray(items)) items = (CONFIG.skills || []).flatMap(s => s.items || []).filter(t => t.length <= 16).slice(0, 16);
+  if (!items.length) { strip.remove(); return; }
+  const grp = `<div class="marquee__grp">${items.map(t => `<span>${esc(t)}</span><i>◆</i>`).join('')}</div>`;
+  track.innerHTML = grp + grp; // duplicated for a seamless -50% loop
+  track.style.setProperty('--marquee-dur', Math.max(18, items.length * 2.4) + 's');
+}
+
+/* ================================================================== *
+ *  Magnetic buttons — main CTAs lean toward the cursor (desktop only)
+ * ================================================================== */
+function magneticButtons() {
+  if (window.matchMedia('(hover: none)').matches) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  document.querySelectorAll('.btn, .bored-btn').forEach(el => {
+    el.addEventListener('pointermove', (e) => {
+      const r = el.getBoundingClientRect();
+      const x = (e.clientX - r.left - r.width / 2) * .16;
+      const y = (e.clientY - r.top - r.height / 2) * .3;
+      el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+    });
+    el.addEventListener('pointerleave', () => { el.style.transform = ''; });
+  });
+}
+
+/* ================================================================== *
+ *  3D tilt + cursor glare on project cards (desktop only)
+ * ================================================================== */
+function tiltCards() {
+  if (window.matchMedia('(hover: none)').matches) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  document.querySelectorAll('.pcard').forEach(card => {
+    card.addEventListener('pointermove', (e) => {
+      const r = card.getBoundingClientRect();
+      const px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
+      card.style.setProperty('--px', (px * 100).toFixed(1) + '%');
+      card.style.setProperty('--py', (py * 100).toFixed(1) + '%');
+      card.style.transform =
+        `perspective(900px) rotateX(${((.5 - py) * 5).toFixed(2)}deg) rotateY(${((px - .5) * 6).toFixed(2)}deg) translateY(-6px)`;
+    });
+    card.addEventListener('pointerleave', () => { card.style.transform = ''; });
+  });
+}
+
+/* ================================================================== *
  *  Project screenshots: drop to the generated glyph if the image is missing
  * ================================================================== */
 function wireImageFallbacks() {
@@ -482,9 +698,9 @@ function wireImageFallbacks() {
  *  Themes (persisted) + dropdown menu
  * ================================================================== */
 const THEMES = [
-  { id: 'light', label: 'Light' },
-  { id: 'professional', label: 'Subtle Dark' },
-  { id: 'neural', label: 'Colorful Dark' },
+  { id: 'light', label: 'Porcelain' },
+  { id: 'professional', label: 'Graphite Gold' },
+  { id: 'neural', label: 'Aurora' },
 ];
 function fallbackTheme() {
   const d = CONFIG.defaultTheme;
@@ -498,6 +714,9 @@ function applyTheme(id) {
   if (!THEMES.some(t => t.id === id)) id = fallbackTheme();
   document.documentElement.setAttribute('data-theme', id);
   try { localStorage.setItem('mdtheme', id); } catch (e) {}
+  // keep the mobile browser chrome (address bar) tinted to match the theme
+  const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+  if (bg) setAttr('#meta-theme-color', 'content', bg);
   const btn = $('#theme-btn');
   if (btn) {
     btn.querySelector('[data-label]').textContent = THEMES.find(t => t.id === id).label;
@@ -567,9 +786,13 @@ function commandPalette() {
   if (L.email) COMMANDS.push({ icon: '✉', label: 'Send an email', hint: 'mail', action: () => open('mailto:' + L.email) });
   if (L.resume) COMMANDS.push({ icon: '⤓', label: 'Download résumé (PDF)', hint: 'file', action: () => open(L.resume) });
   COMMANDS.push(
-    { icon: '○', label: 'Theme: Light', hint: 'theme', action: () => { close(); applyTheme('light'); } },
-    { icon: '◐', label: 'Theme: Subtle Dark', hint: 'theme', action: () => { close(); applyTheme('professional'); } },
-    { icon: '◑', label: 'Theme: Colorful Dark', hint: 'theme', action: () => { close(); applyTheme('neural'); } },
+    { icon: '▶', label: 'Demo: Intelligent web crawler', hint: 'demo', action: () => { close(); window.Demos && window.Demos.open('crawler'); } },
+    { icon: '▶', label: 'Demo: Chat SQL agent', hint: 'demo', action: () => { close(); window.Demos && window.Demos.open('sql'); } },
+    { icon: '▶', label: 'Demo: MRI pipeline (featured project)', hint: 'demo', action: () => { close(); go('#projects'); setTimeout(() => window.__runMri && window.__runMri(), 700); } },
+    { icon: '◒', label: 'Play Brick Breaker', hint: 'game', action: () => { close(); window.BrickGame && window.BrickGame.open(); } },
+    { icon: '○', label: 'Theme: Porcelain (light)', hint: 'theme', action: () => { close(); applyTheme('light'); } },
+    { icon: '◐', label: 'Theme: Graphite Gold (dark)', hint: 'theme', action: () => { close(); applyTheme('professional'); } },
+    { icon: '◑', label: 'Theme: Aurora (dark)', hint: 'theme', action: () => { close(); applyTheme('neural'); } },
   );
 
   let filtered = COMMANDS, sel = 0;
@@ -579,8 +802,16 @@ function commandPalette() {
         <span class="pi">${c.icon}</span>${c.label}<small>${c.hint}</small>
       </li>`).join('') || '<li style="color:var(--faint);cursor:default">No matches</li>';
   }
-  function openPalette() { palette.hidden = false; input.value = ''; filtered = COMMANDS; sel = 0; render(); setTimeout(() => input.focus(), 30); }
-  function close() { palette.hidden = true; }
+  function openPalette() {
+    palette.hidden = false; input.value = ''; filtered = COMMANDS; sel = 0; render();
+    FocusTrap.activate(palette.querySelector('.palette__box'));
+    setTimeout(() => input.focus(), 30);
+  }
+  function close() {
+    if (palette.hidden) return;
+    palette.hidden = true;
+    FocusTrap.release();
+  }
 
   input.addEventListener('input', () => {
     const q = input.value.toLowerCase();
@@ -658,6 +889,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Content
   renderMeta();
+  injectJsonLd();
   renderBrand();
   renderSectionTitles();
   renderHero();
@@ -668,6 +900,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderTimeline();
   renderContact();
   renderFooter();
+  renderMarquee();
 
   // Behaviours
   neuralBackground();
@@ -677,6 +910,8 @@ document.addEventListener('DOMContentLoaded', () => {
   mriDemo();
   scrollFx();
   cursorGlow();
+  magneticButtons();
+  tiltCards();
   wireImageFallbacks();
   themeMenu();
   mobileNav();
