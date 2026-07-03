@@ -35,9 +35,8 @@ const CONFIG = {
     post: 'Dasouqi',       // text after the accent space
   },
 
-  /* ---- Default colour theme ----
-     'light' = Porcelain · 'professional' = Graphite Gold · 'neural' = Aurora */
-  defaultTheme: 'professional',
+  /* ---- Default colour theme ---- 'light' or 'dark' */
+  defaultTheme: 'light',
 
   /* ---- Tech marquee (the scrolling strip under the hero). [] to hide. ---- */
   marquee: ['PyTorch', 'FastAPI', 'YOLO', 'Sentence-BERT', 'LlamaIndex', 'Ollama', 'Python', 'Kotlin', 'SQL', 'CUDA', 'Jetpack Compose', 'Firestore', 'TensorBoard', 'asyncio'],
@@ -57,6 +56,7 @@ const CONFIG = {
     linkedin: 'https://linkedin.com/in/mohammeddasouqi',
     email:    'mohammeddasouqi@hotmail.com',
     phone:    '+966 53 862 2526',          // '' to hide
+    whatsapp: '',                          // WhatsApp number or full wa.me/chat URL; '' = auto-use the phone number above
     resume:   'assets/files/Mohammed_Dasouqi_CV.pdf', // '' to hide résumé buttons
   },
 
@@ -120,7 +120,7 @@ const CONFIG = {
       { label: 'Recall', value: 0.9592 },
     ],
     metricsCaption: 'Held-out test set · BR35H (800 MRI scans)', // '' to hide
-    note: '↳ Detection met or beat the original RepVGG-GELAN paper (Precision 98.6% vs 98.2%, AP<sub>50:95</sub> 73.0% vs 72.3%). Annotation-quality filtering improved Dice by 1.5% and removed a systematic "circular effect" bias in predicted masks.', // HTML allowed, '' to hide
+    note: 'Detection met or beat the original RepVGG-GELAN paper (Precision 98.6% vs 98.2%, AP<sub>50:95</sub> 73.0% vs 72.3%). Annotation-quality filtering improved Dice by 1.5% and removed a systematic "circular effect" bias in predicted masks.', // HTML allowed, '' to hide
     tags: ['PyTorch 2.6', 'YOLO', 'RepVGG-GELAN', 'EfficientUNet++', 'EfficientNet-B0', 'CUDA'],
     repo: 'https://github.com/7amoody1985/Brain-Tumor-Detection-Segmentation', // '' to hide
     paper: 'assets/files/reports/brain-tumor-detection-segmentation.pdf',       // '' to hide

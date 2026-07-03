@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="professional">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,7 +8,7 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; img-src 'self' data: https://*.goatcounter.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://gc.zgo.at; connect-src 'self' https://*.goatcounter.com; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <!-- Tints the mobile browser chrome; kept in sync with the theme by applyTheme() -->
-  <meta name="theme-color" id="meta-theme-color" content="#0e0f12" />
+  <meta name="theme-color" id="meta-theme-color" content="#fafaf9" />
 
   <!-- Title/description below are also set from config.js at runtime.
        Edit assets/js/config.js to change the site; these are just fallbacks. -->
@@ -27,38 +27,36 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
 
   <link rel="icon" id="favicon" type="image/svg+xml" href="assets/img/favicon.svg" />
 
   <!-- config.js must load before the anti-flash script so we know the default theme -->
-  <script src="assets/js/config.js?v=3.4"></script>
+  <script src="assets/js/config.js?v=4.2"></script>
 
-  <!-- Apply saved (or default) theme before paint to avoid a flash of the wrong theme -->
+  <!-- Apply saved (or default) theme before paint to avoid a flash of the wrong theme.
+       Legacy values from the old 3-theme system are migrated to light/dark. -->
   <script>
     (function () {
       try {
-        var valid = ['professional', 'neural', 'light'];
-        var fallback = (window.CONFIG && CONFIG.defaultTheme) || 'professional';
+        var fallback = (window.CONFIG && CONFIG.defaultTheme) || 'light';
         var t = localStorage.getItem('mdtheme');
-        document.documentElement.setAttribute('data-theme', valid.indexOf(t) > -1 ? t : fallback);
+        if (t === 'professional' || t === 'neural') t = 'dark'; // migrate old themes
+        document.documentElement.setAttribute('data-theme', t === 'light' || t === 'dark' ? t : fallback);
       } catch (e) {}
     })();
   </script>
 
-  <link rel="stylesheet" href="assets/css/style.css?v=3.4" />
+  <link rel="stylesheet" href="assets/css/style.css?v=4.0" />
 </head>
 <body>
-  <!--  Animated neural-network background canvas  -->
-  <canvas id="neural-bg" aria-hidden="true"></canvas>
-
-  <!-- Cursor-follow glow (site-wide) -->
-  <div class="cursor-glow" id="cursor-glow" aria-hidden="true"></div>
+  <!-- Thin scroll-progress hairline across the very top -->
+  <div class="progress" id="progress" aria-hidden="true"></div>
 
   <!--  Navigation  -->
   <header class="nav" id="nav">
     <a href="#home" class="nav__logo" id="nav-logo" aria-label="Home"></a>
-    <nav class="nav__links" aria-label="Primary">
+    <nav class="nav__links" id="nav-links" aria-label="Primary">
       <a href="#about">About</a>
       <a href="#skills">Skills</a>
       <a href="#projects">Projects</a>
@@ -66,22 +64,16 @@
       <a href="#contact">Contact</a>
     </nav>
     <div class="nav__actions">
-      <button class="kbar-hint" id="open-palette" aria-label="Open command palette">
-        <kbd>Ctrl</kbd><kbd>K</kbd>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Switch to dark mode" title="Toggle theme">
+        <svg class="theme-toggle__sun" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4.2"/>
+          <path d="M12 2.5v2.4M12 19.1v2.4M2.5 12h2.4M19.1 12h2.4M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M19.1 4.9l-1.7 1.7M6.6 17.4l-1.7 1.7"/>
+        </svg>
+        <svg class="theme-toggle__moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"/>
+        </svg>
       </button>
-      <div class="theme-menu" id="theme-menu">
-        <button class="theme-menu__btn" id="theme-btn" aria-haspopup="listbox" aria-expanded="false" aria-label="Choose colour theme">
-          <span class="theme-swatch sw-professional" data-sw></span>
-          <span class="theme-menu__label" data-label>Graphite Gold</span>
-          <svg class="theme-menu__chev" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-        <ul class="theme-menu__list" id="theme-list" role="listbox" aria-label="Colour theme">
-          <li role="option" data-theme-value="light" aria-selected="false"><span class="theme-swatch sw-light"></span>Porcelain</li>
-          <li role="option" data-theme-value="professional" aria-selected="true"><span class="theme-swatch sw-professional"></span>Graphite Gold</li>
-          <li role="option" data-theme-value="neural" aria-selected="false"><span class="theme-swatch sw-neural"></span>Aurora</li>
-        </ul>
-      </div>
-      <button class="nav__burger" id="nav-burger" aria-label="Open menu"><span></span><span></span><span></span></button>
+      <button class="nav__burger" id="nav-burger" aria-label="Open menu" aria-expanded="false"><span></span><span></span></button>
     </div>
   </header>
 
@@ -123,7 +115,7 @@
         <div class="section__rule"></div>
       </div>
       <div id="featured-mount"><!-- featured project rendered from config --></div>
-      <div class="proj-grid" id="proj-grid"><!-- rendered from config --></div>
+      <div class="prows" id="proj-grid"><!-- rendered from config --></div>
     </section>
 
     <!--  EXPERIENCE  -->
@@ -147,27 +139,13 @@
     <span class="footer__built" id="footer-right"></span>
   </footer>
 
-  <!--  Command palette  -->
-  <div class="palette" id="palette" role="dialog" aria-modal="true" aria-label="Command palette" hidden>
-    <div class="palette__backdrop" data-close></div>
-    <div class="palette__box">
-      <input type="text" id="palette-input" class="palette__input" placeholder="Type a command or jump to a section…" autocomplete="off" />
-      <ul class="palette__list" id="palette-list"></ul>
-      <div class="palette__foot"><kbd>↑↓</kbd> navigate <kbd>↵</kbd> select <kbd>esc</kbd> close</div>
-    </div>
-  </div>
-
-  <!-- Back-to-top button with a circular scroll-progress ring -->
+  <!-- Back-to-top -->
   <button class="to-top" id="to-top" aria-label="Back to top" title="Back to top">
-    <svg class="to-top__ring" viewBox="0 0 44 44" aria-hidden="true">
-      <circle class="to-top__track" cx="22" cy="22" r="19" />
-      <circle class="to-top__bar" cx="22" cy="22" r="19" />
-    </svg>
-    <span class="to-top__arrow" aria-hidden="true">↑</span>
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
   </button>
 
   <script src="assets/js/brickbreaker.js?v=2.7" defer></script>
   <script src="assets/js/demos.js?v=3.1" defer></script>
-  <script src="assets/js/app.js?v=3.4" defer></script>
+  <script src="assets/js/app.js?v=4.1" defer></script>
 </body>
 </html>

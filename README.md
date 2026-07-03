@@ -10,18 +10,15 @@ A fast, single-page developer/engineer portfolio — built from scratch with **v
 ## Features
 
 - One-file configuration — edit `config.js`, nothing else
-- Three colour themes, saved between visits — **Graphite Gold** (default, graphite + champagne gold), **Porcelain** (warm light), **Aurora** (teal→blue→fuchsia dark)
+- **Minimal ink-on-paper design** — oversized display typography (Archivo / Space Grotesk), hairline dividers, one blue accent
+- **Light / dark themes** with a single toggle, saved between visits (`defaultTheme` in config)
 - **Interactive in-browser project demos** (all vanilla JS, no network calls):
   - an animated two-stage **MRI pipeline** (detect → crop → segment) on the featured project
   - a live **web-crawler simulation** — semantic-priority vs breadth-first, with a relevance comparison
   - a mock **natural-language → SQL chat** whose results are genuinely computed in the browser
-- Command palette (`Ctrl` / `Cmd` + `K`) — navigation, themes, demos and the game
-- **Scroll-reactive neural-network background** — depth-based parallax layers that stretch into "warp" motion streaks while you scroll
-- Scroll-driven section transitions, per-letter gradient hero animation, tech marquee, 3D-tilt project cards, magnetic buttons
-- Consistent brand mark from one config value — monogram tile in the nav, favicon and OG share the same design
-- Optional animated metric rings for the featured project
+- **Flowy motion throughout** — masked hero name reveal, rotating role word, scroll reveals, hide-on-scroll nav, trailing cursor ring, magnetic CTA, count-up metrics, tech marquee
+- Editorial project rows with source-code and PDF-report links (auto-dimmed if a file is missing)
 - Optional playable mini-game popup (vanilla `<canvas>`) — attach to any project with a `play` flag
-- Project cards with source-code and PDF-report links (auto-dimmed if a file is missing), and per-card sizing (`size: 'lg' | 'sm'`)
 - SEO & a11y built in: JSON-LD Person schema, `theme-color` synced to the active theme, focus-trapped modals, fully responsive, respects `prefers-reduced-motion`
 
 ---
@@ -32,7 +29,7 @@ A fast, single-page developer/engineer portfolio — built from scratch with **v
 2. **Add your files:**
    - Résumé → `assets/files/` (then point `links.resume` at it)
    - Project reports (PDF) → `assets/files/reports/` (then set a project's `paper`)
-   - Screenshots → `assets/img/projects/` (then set a project's `image`)
+   - A screenshot for the featured project → `assets/img/projects/` (set `featured.image`; regular project rows are text-only by design)
    - Any link to a file that doesn't exist yet is automatically dimmed on the live site — nothing shows as broken.
 3. **(Optional) Theme colours & fonts** live as CSS variables at the top of `assets/css/style.css`.
 
