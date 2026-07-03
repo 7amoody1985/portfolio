@@ -417,12 +417,15 @@ function projectsWiggle() {
     const h = grid.getBoundingClientRect().height;
     if (!h) return;
     svg.setAttribute('viewBox', `0 0 22 ${Math.round(h)}`);
-    // vertical wave: cubic segments bulging alternately left/right
-    const cx = 11, amp = 10, seg = 54;
+    // vertical wave: cubic segments bulging alternately left/right.
+    // Amplitude tapers over `ramp` px at both ends so the line emerges from
+    // (and hands off to) the straight thread segments without a kink.
+    const cx = 11, amp = 10, seg = 54, ramp = 150;
     let d = `M ${cx} 0`, dir = 1;
     for (let y = 0; y < h; y += seg) {
-      const y2 = Math.min(y + seg, h), s = y2 - y;
-      d += ` C ${cx + amp * dir} ${(y + s * .35).toFixed(1)}, ${cx + amp * dir} ${(y2 - s * .35).toFixed(1)}, ${cx} ${y2.toFixed(1)}`;
+      const y2 = Math.min(y + seg, h), s = y2 - y, mid = y + s / 2;
+      const bx = (cx + amp * Math.min(1, mid / ramp, (h - mid) / ramp) * dir).toFixed(1);
+      d += ` C ${bx} ${(y + s * .35).toFixed(1)}, ${bx} ${(y2 - s * .35).toFixed(1)}, ${cx} ${y2.toFixed(1)}`;
       dir = -dir;
     }
     track.setAttribute('d', d);
@@ -451,6 +454,118 @@ function projectsWiggle() {
   update();
 }
 
+/* The thread — connectors that join the projects wiggle to the timeline
+   spine and carry the line on into Contact. Each section handoff is marked
+   by a diamond joint that lights up as the fill passes through it. In
+   Contact the line elbows sideways and sweeps toward the kicker, where it
+   terminates in a big accent full stop (the brand period) that pops in with
+   a ring ripple. Segments share the 72%-viewport trigger, so the tip hands
+   off seamlessly: wiggle → joint → connector → spine → joint → elbow → dot. */
+function threadFx() {
+  const c1 = document.querySelector('#experience > .thread');
+  const c2 = document.querySelector('#contact > .thread');
+  const tl = $('#timeline'), mount = $('#contact-mount');
+  if (!c1 || !c2 || !tl || !mount) return;
+  const j1 = c1.querySelector('.thread__joint'), j2 = c2.querySelector('.thread__joint');
+  const svg = c2.querySelector('.thread__svg');
+  const track = c2.querySelector('.thread__track');
+  const path = c2.querySelector('.thread__path');
+  const dot = c2.querySelector('.thread__dot');
+  const rule = mount.querySelector('.contact__kicker-rule'); // continues past the label to the edge
+  const PATH_DONE = 0.72; // elbow+dot draw over [0, PATH_DONE]; rule over [PATH_DONE, 1]
+  const RULE_STRETCH = 1.8; // rule needs this much more scroll distance than the elbow/dot to feel less twitchy
+  const RULE_EASE = 0.15;   // lerp factor smoothing the rule toward its target each frame
+  let len = 0;
+  let ruleTarget = 0, ruleShown = 0, ruleRafId = null;
+
+  function size() {
+    c1.style.height = tl.offsetTop + 'px'; // section top → spine top
+
+    // End path: drop from the section top, elbow right, sweep toward the
+    // kicker ("05 — Get in touch"), ending where the full stop lands.
+    const kicker = mount.querySelector('.contact__kicker');
+    let d, ex, ey;
+    if (kicker) {
+      // kicker centre measured via rect deltas so the .reveal transform
+      // (mount sits 30px low until revealed) can't skew the layout numbers
+      const mr = mount.getBoundingClientRect(), kr = kicker.getBoundingClientRect();
+      ey = mount.offsetTop + (kr.top - mr.top) + kr.height / 2;
+      ex = 56;
+      d = `M 11 0 V ${(ey - 14).toFixed(1)} Q 11 ${ey.toFixed(1)} 25 ${ey.toFixed(1)} H ${ex}`;
+    } else {
+      // kicker hidden in config — fall back to a plain vertical ending
+      ey = Math.max(mount.offsetTop - 26, 0); ex = 11;
+      d = `M 11 0 V ${ey.toFixed(1)}`;
+    }
+    c2.style.height = Math.ceil(ey + 2) + 'px';
+    svg.setAttribute('viewBox', `0 0 90 ${Math.ceil(ey + 2)}`);
+    track.setAttribute('d', d);
+    path.setAttribute('d', d);
+    len = path.getTotalLength();
+    path.style.strokeDasharray = len;
+    dot.style.left = (ex + 10 - 9) + 'px'; // dot centre 10px past the line end
+    dot.style.top = (ey - 9) + 'px';
+  }
+
+  if (reduced()) {
+    size();
+    c1.style.setProperty('--th-progress', 1);
+    path.style.strokeDashoffset = 0;
+    if (rule) rule.style.transform = 'scaleX(1)';
+    j1.classList.add('on'); j2.classList.add('on');
+    c2.classList.add('pop');
+    window.addEventListener('resize', size, { passive: true });
+    return;
+  }
+
+  let ticking = false;
+  function progress(el, stretch = 1) {
+    const r = el.getBoundingClientRect();
+    const vh = window.innerHeight;
+    if (!vh || !r.height) return null; // degenerate viewport — keep last good state
+    return Math.min(Math.max((vh * 0.72 - r.top) / (r.height * stretch), 0), 1);
+  }
+  // eases the rule's displayed scaleX toward its scroll-derived target instead of
+  // snapping every scroll tick — keeps fast/trackpad scrolling from looking jerky
+  function animateRule() {
+    ruleRafId = null;
+    ruleShown += (ruleTarget - ruleShown) * RULE_EASE;
+    if (Math.abs(ruleTarget - ruleShown) < 0.001) ruleShown = ruleTarget;
+    rule.style.transform = `scaleX(${ruleShown.toFixed(4)})`;
+    if (ruleShown !== ruleTarget) ruleRafId = requestAnimationFrame(animateRule);
+  }
+  function update() {
+    ticking = false;
+    const p1 = progress(c1), p2 = progress(c2);
+    if (p1 !== null) {
+      c1.style.setProperty('--th-progress', p1.toFixed(4));
+      j1.classList.toggle('on', p1 > 0.01);
+    }
+    if (p2 !== null && len) {
+      // line + elbow + dot draw over the first PATH_DONE of the scroll...
+      const pp = Math.min(1, p2 / PATH_DONE);
+      path.style.strokeDashoffset = (len * (1 - pp)).toFixed(1);
+      j2.classList.toggle('on', p2 > 0.01);
+      if (pp >= 0.999) c2.classList.add('pop'); // one-shot — the full stop lands
+      // ...then the rule continues past the label to the edge over the rest.
+      // It gets its own (stretched) progress so it takes noticeably more
+      // scrolling to draw, and eases toward that target rather than tracking
+      // the raw scroll position 1:1.
+      if (rule) {
+        const p2Rule = progress(c2, RULE_STRETCH);
+        ruleTarget = Math.min(1, Math.max(0, (p2Rule - PATH_DONE) / (1 - PATH_DONE)));
+        if (ruleRafId === null) ruleRafId = requestAnimationFrame(animateRule);
+      }
+    }
+  }
+  function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(update); } }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', () => { size(); onScroll(); }, { passive: true });
+  window.addEventListener('load', () => { size(); update(); });
+  size();
+  update();
+}
+
 /* ================================================================== *
  *  Render: contact
  * ================================================================== */
@@ -465,7 +580,7 @@ function renderContact() {
   const wa = L.whatsapp || L.phone;
   if (wa) links.push(`<a class="tlink" href="${waHref(wa)}" target="_blank" rel="noopener">WhatsApp <span class="arr" aria-hidden="true">↗</span></a>`);
   $('#contact-mount').innerHTML = `
-    ${c.kicker ? `<p class="contact__kicker">05 — ${esc(c.kicker)}</p>` : ''}
+    ${c.kicker ? `<p class="contact__kicker"><span>05 — ${esc(c.kicker)}</span><i class="contact__kicker-rule" aria-hidden="true"></i></p>` : ''}
     <h2 class="contact__title">${c.title || ''}</h2>
     ${c.sub ? `<p class="contact__sub">${c.sub}</p>` : ''}
     ${L.email ? `<a href="mailto:${L.email}" class="contact__mail">${esc(L.email)}</a>` : ''}
@@ -793,6 +908,7 @@ document.addEventListener('DOMContentLoaded', () => {
   scrollFx();
   timelineFx();
   projectsWiggle();
+  threadFx();
   cursorRing();
   magneticButtons();
   themeToggle();

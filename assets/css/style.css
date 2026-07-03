@@ -370,6 +370,73 @@ a.is-missing { opacity: .35; cursor: not-allowed; }
   max-width: var(--container);
   margin: 0 auto;
   padding: clamp(88px, 13vh, 150px) var(--gutter) 0;
+  position: relative; /* anchors the .thread connectors */
+}
+
+/* ==== Thread (section connectors + finale full stop) ==================== */
+/* Continues the projects wiggle down through the Experience head into the
+   timeline spine, then on into Contact, where it ends in an oversized accent
+   period. Heights + --th-progress are managed by threadFx() in app.js. */
+.thread {
+  position: absolute; top: 0; left: calc(var(--gutter) + 10px);
+  z-index: -1; /* behind in-flow content — the section index chip masks it */
+  width: 2px; height: 0;
+  background: var(--border);
+}
+.thread__fill {
+  display: block; width: 100%; height: 100%;
+  background: var(--accent);
+  transform: scaleY(var(--th-progress, 0));
+  transform-origin: 50% 0;
+}
+/* joint — a hollow diamond marking each section handoff; the line threads
+   through it and it lights up as the fill passes */
+.thread__joint {
+  position: absolute; top: 0; left: 1px; /* centered on the 2px line */
+  width: 10px; height: 10px;
+  transform: translate(-50%, -50%) rotate(45deg);
+  background: var(--bg);
+  border: 1.5px solid var(--faint);
+  transition: border-color .35s, box-shadow .35s, background-color .45s var(--ease-inout);
+}
+.thread__joint.on {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+/* the end connector is an SVG so the line can elbow sideways into Contact */
+.thread--end { left: var(--gutter); width: 90px; background: none; }
+.thread--end > .thread__joint { left: 11px; }
+.thread__svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.thread__svg path { fill: none; stroke-width: 2; stroke-linecap: round; }
+.thread__track { stroke: var(--border); }
+.thread__path { stroke: var(--accent); }
+
+/* the full stop — the brand period, popping in right before the kicker
+   (left/top are set by threadFx() at the path's end point) */
+.thread__dot {
+  position: absolute;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  transform: scale(0);
+}
+.thread--end.pop .thread__dot { animation: dotPop .55s var(--ease-out) forwards; }
+@keyframes dotPop {
+  0% { transform: scale(0); }
+  60% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+.thread__dot::after {
+  content: ''; position: absolute; inset: -2px;
+  border-radius: 50%;
+  border: 1.5px solid var(--accent);
+  opacity: 0;
+}
+.thread--end.pop .thread__dot::after { animation: dotRing .9s .12s var(--ease-out) forwards; }
+@keyframes dotRing {
+  0% { opacity: .8; transform: scale(1); }
+  100% { opacity: 0; transform: scale(3.4); }
 }
 .section__head {
   display: flex; align-items: baseline; gap: 18px;
@@ -378,8 +445,11 @@ a.is-missing { opacity: .35; cursor: not-allowed; }
 .section__index {
   font-family: var(--font-mono); font-size: .8rem;
   color: var(--accent);
+  background: var(--bg); /* masks the thread line passing behind the index */
+  padding: 4px 8px 4px 0;
   transform: translateX(-14px); opacity: 0;
-  transition: transform .7s var(--ease-out), opacity .7s;
+  transition: transform .7s var(--ease-out), opacity .7s,
+              background-color .45s var(--ease-inout);
 }
 .section__title {
   font-family: var(--font-display);
@@ -731,7 +801,20 @@ a.is-missing { opacity: .35; cursor: not-allowed; }
 
 /* ==== Contact =========================================================== */
 .section--contact { padding-bottom: clamp(80px, 12vh, 140px); }
-.contact__kicker { margin-bottom: 20px; color: var(--accent); }
+.contact__kicker {
+  display: flex; align-items: center; gap: 20px;
+  margin-bottom: 20px; color: var(--accent);
+  padding-left: 92px; /* room for the thread's elbow + full stop before the text */
+}
+/* continues the thread past the label to the section's far edge — same 2px
+   accent stroke as the rest of the thread. scaleX is driven by threadFx()
+   from the SAME scroll progress as the line, so it draws in lockstep (no
+   separate transition) and reads as one continuous gesture:
+   "──●05 — Get in touch———" spanning the full inner content width. */
+.contact__kicker-rule {
+  flex: 1; height: 2px; background: var(--accent);
+  transform: scaleX(0); transform-origin: 0 50%;
+}
 .contact__title {
   font-family: var(--font-display);
   font-weight: 900;
@@ -972,7 +1055,8 @@ a.is-missing { opacity: .35; cursor: not-allowed; }
   .featured { grid-template-columns: 1fr; }
   .skill-row { grid-template-columns: 1fr; gap: 10px; padding: 22px 0; }
   .prows { --pw-pad: 34px; }
-  .timeline { --tl-pad: 34px; --tl-x: 6px; --tl-row-pad: clamp(40px, 6vh, 64px); }
+  /* --tl-x stays 10px so the spine lines up with the wiggle + thread (center x=11) */
+  .timeline { --tl-pad: 34px; --tl-x: 10px; --tl-row-pad: clamp(40px, 6vh, 64px); }
   .tl-item { grid-template-columns: 1fr; gap: 2px; }
   .tl-item__when { padding: 0 0 6px; }
   .tl-item__node { top: calc(var(--tl-row-pad) + 5px); }
@@ -1032,5 +1116,10 @@ a.is-missing { opacity: .35; cursor: not-allowed; }
   .tl-spine__fill { transform: scaleY(1); }
   .tl-item__node { background: var(--accent); border-color: var(--accent); }
   .wiggle__fill { stroke-dashoffset: 0 !important; }
+  .thread__fill { transform: scaleY(1); }
+  .thread__path { stroke-dashoffset: 0 !important; }
+  .thread__joint { border-color: var(--accent); }
+  .contact__kicker-rule { transform: scaleX(1); }
+  .thread--end .thread__dot { transform: scale(1); }
   .cursor { display: none; }
 }
