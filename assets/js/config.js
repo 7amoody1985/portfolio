@@ -36,7 +36,7 @@ const CONFIG = {
   },
 
   /* ---- Default colour theme ---- 'light' or 'dark' */
-  defaultTheme: 'light',
+  defaultTheme: 'dark',
 
   /* ---- Tech marquee (the scrolling strip under the hero). [] to hide. ---- */
   marquee: ['PyTorch', 'FastAPI', 'YOLO', 'Sentence-BERT', 'LlamaIndex', 'Ollama', 'Python', 'Kotlin', 'SQL', 'CUDA', 'Jetpack Compose', 'Firestore', 'TensorBoard', 'asyncio'],
@@ -50,7 +50,7 @@ const CONFIG = {
     goatcounter: '7amoody1985', // (just the code; not the full URL)
   },
 
-  /* ---- Links (reused in the hero, contact section and command palette) ---- */
+  /* ---- Links (reused in the hero and contact section) ---- */
   links: {
     github:   'https://github.com/7amoody1985',
     linkedin: 'https://linkedin.com/in/mohammeddasouqi',
@@ -186,7 +186,7 @@ const CONFIG = {
       repo: 'https://github.com/7amoody1985/portfolio', // ← update if your repo name differs
       paper: null,
       size: 'sm',        // narrower card
-      desc: 'This site — vanilla HTML/CSS/JS, no frameworks, no build step. One config file drives everything: three themes, a command palette (Ctrl/Cmd+K), scroll-driven section transitions, and interactive in-browser demos of my projects (MRI pipeline, crawler simulation, NL→SQL chat).',
+      desc: 'This site — vanilla HTML/CSS/JS, no frameworks, no build step. One config file drives everything: light/dark themes, scroll-driven motion (a self-drawing experience timeline with parallax year watermarks, and a wiggling line threading the projects list), and interactive in-browser demos of my projects (MRI pipeline, crawler simulation, NL→SQL chat).',
       tags: ['Vanilla JS', 'HTML / CSS', 'No frameworks', 'Responsive', 'a11y'],
     },
     {

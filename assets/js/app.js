@@ -302,7 +302,10 @@ function renderFeatured() {
  *  Render: project rows (editorial list — no cards, no covers)
  * ================================================================== */
 function renderProjects() {
-  $('#proj-grid').innerHTML = (CONFIG.projects || []).map((p, i) => `
+  $('#proj-grid').innerHTML =
+    `<div class="wiggle" aria-hidden="true"><svg class="wiggle__svg">
+      <path class="wiggle__track" d="" /><path class="wiggle__fill" d="" />
+    </svg></div>` + (CONFIG.projects || []).map((p, i) => `
     <article class="prow reveal" style="--rd:${i * 60}ms">
       <span class="prow__idx" aria-hidden="true">${String(i + 1).padStart(2, '0')}</span>
       <div class="prow__body">
@@ -340,15 +343,112 @@ function wirePlayButtons() {
  *  Render: timeline
  * ================================================================== */
 function renderTimeline() {
-  $('#timeline').innerHTML = (CONFIG.timeline || []).map((t, i) => `
+  const items = (CONFIG.timeline || []).map((t, i) => {
+    const years = String(t.when).match(/\d{4}/g) || ['']; // last year in "when" → ghost watermark
+    const year = years[years.length - 1];
+    return `
     <div class="tl-item reveal" style="--rd:${i * 80}ms">
+      ${year ? `<span class="tl-item__ghost" aria-hidden="true">${year}</span>` : ''}
+      <span class="tl-item__node" aria-hidden="true"></span>
       <p class="tl-item__when">${esc(t.when)}</p>
       <div>
         <p class="tl-item__role">${esc(t.role)}</p>
         <p class="tl-item__org">${esc(t.org)}</p>
         <p class="tl-item__desc">${t.desc || ''}</p>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
+  $('#timeline').innerHTML =
+    `<div class="tl-spine" aria-hidden="true"><i class="tl-spine__fill"></i></div>` + items;
+}
+
+/* Timeline spine draws itself as the section scrolls through the viewport;
+   nodes fill in as the line passes them, ghost years drift slightly slower
+   than the page (parallax). Reduced motion: everything just shown complete. */
+function timelineFx() {
+  const tl = $('#timeline');
+  if (!tl) return;
+  const items = [...tl.querySelectorAll('.tl-item')];
+  if (!items.length) return;
+  if (reduced()) {
+    tl.style.setProperty('--tl-progress', 1);
+    items.forEach(it => it.querySelector('.tl-item__node').classList.add('on'));
+    return;
+  }
+  let ticking = false;
+  function update() {
+    ticking = false;
+    const rect = tl.getBoundingClientRect();
+    const vh = window.innerHeight;
+    if (!vh || !rect.height) return; // degenerate viewport — keep last good state
+    // the spine tip tracks a line at 72% of the viewport height
+    const p = Math.min(Math.max((vh * 0.72 - rect.top) / rect.height, 0), 1);
+    tl.style.setProperty('--tl-progress', p.toFixed(4));
+    const drawn = p * rect.height;
+    items.forEach(it => {
+      const node = it.querySelector('.tl-item__node');
+      node.classList.toggle('on', drawn >= it.offsetTop + node.offsetTop + 6);
+      const ghost = it.querySelector('.tl-item__ghost');
+      if (ghost) {
+        const r = it.getBoundingClientRect();
+        const c = (r.top + r.height / 2 - vh / 2) / vh; // -0.5 … 0.5 across the viewport
+        ghost.style.setProperty('--gy', (c * 46).toFixed(1) + 'px');
+      }
+    });
+  }
+  function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(update); } }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll, { passive: true });
+  update();
+}
+
+/* Projects wiggle — a sinuous line down the left of the project rows that
+   draws itself with scroll (stroke-dashoffset). Path is generated to match
+   the rendered height and rebuilt on resize. Reduced motion: fully drawn. */
+function projectsWiggle() {
+  const grid = $('#proj-grid');
+  const svg = grid && grid.querySelector('.wiggle__svg');
+  if (!svg) return;
+  const track = svg.querySelector('.wiggle__track');
+  const fill = svg.querySelector('.wiggle__fill');
+  let len = 0;
+
+  function build() {
+    const h = grid.getBoundingClientRect().height;
+    if (!h) return;
+    svg.setAttribute('viewBox', `0 0 22 ${Math.round(h)}`);
+    // vertical wave: cubic segments bulging alternately left/right
+    const cx = 11, amp = 10, seg = 54;
+    let d = `M ${cx} 0`, dir = 1;
+    for (let y = 0; y < h; y += seg) {
+      const y2 = Math.min(y + seg, h), s = y2 - y;
+      d += ` C ${cx + amp * dir} ${(y + s * .35).toFixed(1)}, ${cx + amp * dir} ${(y2 - s * .35).toFixed(1)}, ${cx} ${y2.toFixed(1)}`;
+      dir = -dir;
+    }
+    track.setAttribute('d', d);
+    fill.setAttribute('d', d);
+    len = fill.getTotalLength();
+    fill.style.strokeDasharray = len;
+  }
+
+  if (reduced()) { build(); fill.style.strokeDashoffset = 0; return; }
+
+  let ticking = false;
+  function update() {
+    ticking = false;
+    const rect = grid.getBoundingClientRect();
+    const vh = window.innerHeight;
+    if (!vh || !rect.height || !len) return; // degenerate viewport — keep last good state
+    // same trigger line as the timeline spine: 72% of the viewport height
+    const p = Math.min(Math.max((vh * 0.72 - rect.top) / rect.height, 0), 1);
+    fill.style.strokeDashoffset = (len * (1 - p)).toFixed(1);
+  }
+  function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(update); } }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', () => { build(); onScroll(); }, { passive: true });
+  window.addEventListener('load', () => { build(); update(); }); // heights settle after fonts/images
+  build();
+  update();
 }
 
 /* ================================================================== *
@@ -691,6 +791,8 @@ document.addEventListener('DOMContentLoaded', () => {
   animateMetrics();
   mriDemo();
   scrollFx();
+  timelineFx();
+  projectsWiggle();
   cursorRing();
   magneticButtons();
   themeToggle();

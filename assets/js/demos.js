@@ -2,7 +2,7 @@
    Interactive project demos · demos.js
    In-browser simulations of the crawler and Chat-SQL projects, plus the
    shared demo window they open in. Opened via [data-demo] buttons on the
-   project cards or from the command palette (window.Demos.open(kind)).
+   project rows (or programmatically via window.Demos.open(kind)).
    Vanilla JS, no dependencies — everything runs locally, no network calls.
    ========================================================================= */
 'use strict';

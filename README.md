@@ -16,7 +16,7 @@ A fast, single-page developer/engineer portfolio — built from scratch with **v
   - an animated two-stage **MRI pipeline** (detect → crop → segment) on the featured project
   - a live **web-crawler simulation** — semantic-priority vs breadth-first, with a relevance comparison
   - a mock **natural-language → SQL chat** whose results are genuinely computed in the browser
-- **Flowy motion throughout** — masked hero name reveal, rotating role word, scroll reveals, hide-on-scroll nav, trailing cursor ring, magnetic CTA, count-up metrics, tech marquee
+- **Flowy motion throughout** — masked hero name reveal, rotating role word, scroll reveals, a self-drawing experience timeline (with parallax year watermarks) and a wiggling scroll-drawn line beside the projects, hide-on-scroll nav, trailing cursor ring, magnetic CTA, count-up metrics, tech marquee
 - Editorial project rows with source-code and PDF-report links (auto-dimmed if a file is missing)
 - Optional playable mini-game popup (vanilla `<canvas>`) — attach to any project with a `play` flag
 - SEO & a11y built in: JSON-LD Person schema, `theme-color` synced to the active theme, focus-trapped modals, fully responsive, respects `prefers-reduced-motion`
