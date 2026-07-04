@@ -8,3 +8,8 @@ desktop.ini
 
 # Local tooling / preview configs
 .claude/
+
+# Chatbot worker (Cloudflare)
+chatbot-worker/node_modules/
+chatbot-worker/.dev.vars
+.wrangler/

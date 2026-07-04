@@ -50,6 +50,25 @@ const CONFIG = {
     goatcounter: '7amoody1985', // (just the code; not the full URL)
   },
 
+  /* ---- AI chatbot (floating "Ask AI" bubble, bottom-right) ----
+     A small assistant that answers questions about the CV & projects only.
+     Powered by a Cloudflare Worker (chatbot-worker/) in front of the Claude
+     API — the API key lives in a Worker secret, never in the browser.
+     endpoint: your deployed Worker URL + /chat. On localhost the widget
+     automatically talks to http://127.0.0.1:8787/chat (npx wrangler dev),
+     so leave endpoint '' until you've deployed. show:false hides it all. */
+  chatbot: {
+    show: true,
+    endpoint: 'https://portfolio-chatbot.dasouqi.workers.dev/chat',
+    title: 'Ask about Mohammed',
+    greeting: "Hi — I'm Mohammed's AI assistant. Ask me anything about his skills, projects, or experience.",
+    suggestions: [
+      'What was his final-year project?',
+      "What's his tech stack?",
+      'Is he available to hire?',
+    ],
+  },
+
   /* ---- Links (reused in the hero and contact section) ---- */
   links: {
     github:   'https://github.com/7amoody1985',

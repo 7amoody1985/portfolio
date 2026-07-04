@@ -1,0 +1,17 @@
+{
+  "name": "portfolio-chatbot-worker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cloudflare Worker proxy for the dasouqi.com portfolio AI chatbot (Claude API)",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.93.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

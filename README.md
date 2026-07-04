@@ -11,7 +11,8 @@ A fast, single-page developer/engineer portfolio — built from scratch with **v
 
 - One-file configuration — edit `config.js`, nothing else
 - **Minimal ink-on-paper design** — oversized display typography (Archivo / Space Grotesk), hairline dividers, one blue accent
-- **Light / dark themes** with a single toggle, saved between visits (`defaultTheme` in config)
+- **Light / dark themes** with a single toggle, saved between visits (`defaultTheme` in config — dark by default)
+- **AI chatbot** that answers visitor questions about the CV/projects only, backed by Claude (Cloudflare Worker, see `chatbot-worker/`)
 - **Interactive in-browser project demos** (all vanilla JS, no network calls):
   - an animated two-stage **MRI pipeline** (detect → crop → segment) on the featured project
   - a live **web-crawler simulation** — semantic-priority vs breadth-first, with a relevance comparison
@@ -66,11 +67,25 @@ Also works as-is on Netlify or Vercel.
 │  │  ├─ config.js         # ← all your content lives here
 │  │  ├─ app.js            # rendering engine (rarely needs editing)
 │  │  ├─ demos.js          # interactive project demos (crawler sim, NL→SQL chat)
-│  │  └─ brickbreaker.js   # the mini-game popup
+│  │  ├─ brickbreaker.js   # the mini-game popup
+│  │  └─ chatbot.js        # AI chat widget (talks to chatbot-worker/)
 │  ├─ files/               # résumé + project reports (PDF)
 │  └─ img/                 # favicon.svg, og.png, projects/ screenshots
+├─ chatbot-worker/         # Cloudflare Worker backing the AI chatbot (Claude API)
 └─ README.md
 ```
+
+## AI chatbot (optional)
+
+The chat widget calls a small Cloudflare Worker in `chatbot-worker/` that proxies the Claude API, so the Anthropic key never reaches the browser. It answers only from a hand-written knowledge base (`chatbot-worker/src/knowledge.js`) built from `config.js` + your CV.
+
+To reuse it for your own fork:
+1. `cd chatbot-worker && npm install`
+2. Edit `src/knowledge.js` with your own background.
+3. `npx wrangler secret put ANTHROPIC_API_KEY --config wrangler.toml`, then `npx wrangler deploy --config wrangler.toml` (always pass `--config`, or wrangler mis-detects the whole repo as static assets).
+4. Point `CONFIG.chatbot.endpoint` in `config.js` at your deployed Worker URL, and add that URL to the CSP `connect-src` in `index.html`.
+
+To skip it entirely, leave `CONFIG.chatbot.endpoint` empty — the widget won't render.
 
 ## License
 
