@@ -60,6 +60,11 @@ const CONFIG = {
   chatbot: {
     show: true,
     endpoint: 'https://portfolio-chatbot.dasouqi.workers.dev/chat',
+    // Cloudflare Turnstile site key (bot protection). Leave '' to disable the
+    // challenge. When set, the widget sends a token the Worker verifies — set
+    // the matching secret on the Worker with: wrangler secret put TURNSTILE_SECRET.
+    // Skipped automatically on localhost so `wrangler dev` stays frictionless.
+    turnstileSiteKey: '0x4AAAAAADwBiqLgToA3bKd7', // PUBLIC key only — the Worker has the secret
     title: 'Ask about Mohammed',
     greeting: "Hi — I'm Mohammed's AI assistant. Ask me anything about his skills, projects, or experience.",
     suggestions: [
@@ -205,8 +210,8 @@ const CONFIG = {
       repo: 'https://github.com/7amoody1985/portfolio', // ← update if your repo name differs
       paper: null,
       size: 'sm',        // narrower card
-      desc: 'This site — vanilla HTML/CSS/JS, no frameworks, no build step. One config file drives everything: light/dark themes, scroll-driven motion (a self-drawing experience timeline with parallax year watermarks, and a wiggling line threading the projects list), and interactive in-browser demos of my projects (MRI pipeline, crawler simulation, NL→SQL chat).',
-      tags: ['Vanilla JS', 'HTML / CSS', 'No frameworks', 'Responsive', 'a11y'],
+      desc: 'This site — vanilla HTML/CSS/JS, no frameworks, no build step. One config file drives everything: light/dark themes, scroll-driven motion (a self-drawing experience timeline with parallax year watermarks, and a wiggling line threading the projects list), and interactive in-browser demos of my projects (MRI pipeline, crawler simulation, NL→SQL chat). It also ships an AI assistant — Claude behind a Cloudflare Worker proxy — grounded in a curated knowledge base and per-project report digests, and hardened with origin checks, rate limiting, daily cost caps, and Cloudflare Turnstile bot protection.',
+      tags: ['Vanilla JS', 'HTML / CSS', 'Cloudflare Workers', 'Claude API', 'Responsive', 'a11y'],
     },
     {
       title: 'Brick Breaker Game',

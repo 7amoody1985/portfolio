@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- Security hardening (defense-in-depth for a static site) -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; img-src 'self' data: https://*.goatcounter.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://gc.zgo.at; connect-src 'self' https://*.goatcounter.com https://portfolio-chatbot.dasouqi.workers.dev http://127.0.0.1:8787 http://localhost:8787; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; img-src 'self' data: https://*.goatcounter.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://gc.zgo.at https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; connect-src 'self' https://*.goatcounter.com https://portfolio-chatbot.dasouqi.workers.dev http://127.0.0.1:8787 http://localhost:8787; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <!-- Tints the mobile browser chrome; kept in sync with the theme by applyTheme() -->
   <meta name="theme-color" id="meta-theme-color" content="#0a0a0b" />
@@ -32,7 +32,7 @@
   <link rel="icon" id="favicon" type="image/svg+xml" href="assets/img/favicon.svg" />
 
   <!-- config.js must load before the anti-flash script so we know the default theme -->
-  <script src="assets/js/config.js?v=4.6"></script>
+  <script src="assets/js/config.js?v=4.7"></script>
 
   <!-- Apply saved (or default) theme before paint to avoid a flash of the wrong theme.
        Legacy values from the old 3-theme system are migrated to light/dark. -->
@@ -153,6 +153,6 @@
   <script src="assets/js/brickbreaker.js?v=2.7" defer></script>
   <script src="assets/js/demos.js?v=3.1" defer></script>
   <script src="assets/js/app.js?v=4.8" defer></script>
-  <script src="assets/js/chatbot.js?v=1.0" defer></script>
+  <script src="assets/js/chatbot.js?v=1.1" defer></script>
 </body>
 </html>

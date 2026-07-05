@@ -22,8 +22,14 @@
   const MAX_INPUT = 500;   // matches the worker's per-message cap
   const MAX_TURNS = 16;    // matches the worker's history cap
 
+  /* Cloudflare Turnstile (bot protection). Only in production and only when a
+     site key is configured — skipped on localhost so `wrangler dev` is easy. */
+  const SITE_KEY = (!isLocal && cfg.turnstileSiteKey) || '';
+
   const FALLBACK_MSG = 'The assistant is unavailable right now — please email Mohammed directly instead.';
   const RATE_MSG = "You're sending messages a little too fast — give it a minute and try again.";
+  const DAILY_MSG = "The assistant has reached today's usage limit — please email Mohammed directly instead.";
+  const CHALLENGE_MSG = "Couldn't verify you're human — please refresh the page and try again.";
 
   /* ---------------- DOM ---------------- */
   const root = document.createElement('div');
@@ -93,7 +99,7 @@
 
   function errorBubble(text) {
     const el = addBubble('bot', text);
-    if (EMAIL && text === FALLBACK_MSG) {
+    if (EMAIL && (text === FALLBACK_MSG || text === DAILY_MSG)) {
       el.appendChild(document.createTextNode(' '));
       const a = document.createElement('a');
       a.href = 'mailto:' + EMAIL;
@@ -101,6 +107,65 @@
       el.appendChild(a);
     }
     el.classList.add('aichat__msg--err');
+  }
+
+  /* ---------------- Turnstile (bot gate) ----------------
+     Loads the Cloudflare Turnstile script on demand and runs an invisible
+     challenge to mint a fresh, single-use token per message. Returns null when
+     Turnstile isn't configured (localhost or no site key), in which case the
+     worker doesn't require a token either. */
+  let tsWidgetId = null;
+  let tsPending = null;       // { resolve, reject } for the in-flight execute()
+  let tsScriptPromise = null;
+
+  function loadTurnstileScript() {
+    if (window.turnstile) return Promise.resolve();
+    if (tsScriptPromise) return tsScriptPromise;
+    tsScriptPromise = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+      s.async = true;
+      s.defer = true;
+      s.onload = () => resolve();
+      s.onerror = () => reject(new Error('turnstile_script'));
+      document.head.appendChild(s);
+    });
+    return tsScriptPromise;
+  }
+
+  function ensureTurnstileWidget() {
+    if (tsWidgetId !== null) return;
+    const holder = document.createElement('div');
+    holder.style.display = 'none';
+    root.appendChild(holder);
+    tsWidgetId = window.turnstile.render(holder, {
+      sitekey: SITE_KEY,
+      size: 'invisible',
+      callback: (token) => { if (tsPending) { tsPending.resolve(token); tsPending = null; } },
+      'error-callback': () => { if (tsPending) { tsPending.reject(new Error('turnstile_error')); tsPending = null; } },
+    });
+  }
+
+  function getTurnstileToken() {
+    if (!SITE_KEY) return Promise.resolve(null);
+    return loadTurnstileScript().then(() => {
+      ensureTurnstileWidget();
+      return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => { tsPending = null; reject(new Error('turnstile_timeout')); }, 12000);
+        tsPending = {
+          resolve: (t) => { clearTimeout(timer); resolve(t); },
+          reject: (e) => { clearTimeout(timer); reject(e); },
+        };
+        try {
+          window.turnstile.reset(tsWidgetId);
+          window.turnstile.execute(tsWidgetId);
+        } catch (e) {
+          clearTimeout(timer);
+          tsPending = null;
+          reject(e);
+        }
+      });
+    });
   }
 
   /* ---------------- open / close ---------------- */
@@ -152,17 +217,32 @@
     let bubble = null;
     let answer = '';
     try {
+      /* Mint a fresh bot-gate token first (no-op when Turnstile isn't set up). */
+      let token = null;
+      try {
+        token = await getTurnstileToken();
+      } catch (e) {
+        typing.remove();
+        errorBubble(CHALLENGE_MSG);
+        history.pop();
+        return;
+      }
+
       const res = await fetch(ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: history.slice(-MAX_TURNS) }),
+        body: JSON.stringify({ messages: history.slice(-MAX_TURNS), turnstileToken: token }),
       });
 
       if (!res.ok) {
         let code = '';
         try { code = (await res.json()).error || ''; } catch (e) {}
         typing.remove();
-        errorBubble(res.status === 429 || code === 'rate_limited' ? RATE_MSG : FALLBACK_MSG);
+        let msg = FALLBACK_MSG;
+        if (code === 'daily_limit') msg = DAILY_MSG;
+        else if (code === 'failed_challenge') msg = CHALLENGE_MSG;
+        else if (res.status === 429 || code === 'rate_limited') msg = RATE_MSG;
+        errorBubble(msg);
         history.pop(); // let the visitor retry the same question later
         return;
       }

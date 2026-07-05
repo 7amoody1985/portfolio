@@ -12,7 +12,7 @@ A fast, single-page developer/engineer portfolio — built from scratch with **v
 - One-file configuration — edit `config.js`, nothing else
 - **Minimal ink-on-paper design** — oversized display typography (Archivo / Space Grotesk), hairline dividers, one blue accent
 - **Light / dark themes** with a single toggle, saved between visits (`defaultTheme` in config — dark by default)
-- **AI chatbot** that answers visitor questions about the CV/projects only, backed by Claude (Cloudflare Worker, see `chatbot-worker/`)
+- **AI chatbot** that answers visitor questions about the CV/projects only — backed by Claude via a Cloudflare Worker, grounded in a knowledge base plus per-project report digests, and protected by rate limits, daily cost caps, and Turnstile (see `chatbot-worker/`)
 - **Interactive in-browser project demos** (all vanilla JS, no network calls):
   - an animated two-stage **MRI pipeline** (detect → crop → segment) on the featured project
   - a live **web-crawler simulation** — semantic-priority vs breadth-first, with a relevance comparison
@@ -77,7 +77,7 @@ Also works as-is on Netlify or Vercel.
 
 ## AI chatbot (optional)
 
-The chat widget calls a small Cloudflare Worker in `chatbot-worker/` that proxies the Claude API, so the Anthropic key never reaches the browser. It answers only from a hand-written knowledge base (`chatbot-worker/src/knowledge.js`) built from `config.js` + your CV.
+The chat widget calls a small Cloudflare Worker in `chatbot-worker/` that proxies the Claude API, so the Anthropic key never reaches the browser. It answers from a hand-written knowledge base (`chatbot-worker/src/knowledge.js`) built from `config.js` + your CV. When a visitor asks about a specific project, the worker also injects a detailed digest of that project's report (`chatbot-worker/src/reports.js` — condensed summaries of the PDFs in `assets/files/reports/`, keyed by project) so it can answer in depth. Only the relevant digest is sent, so ordinary chats stay cheap. Update the matching digest in `reports.js` and redeploy whenever a report PDF changes.
 
 To reuse it for your own fork:
 1. `cd chatbot-worker && npm install`
@@ -86,6 +86,20 @@ To reuse it for your own fork:
 4. Point `CONFIG.chatbot.endpoint` in `config.js` at your deployed Worker URL, and add that URL to the CSP `connect-src` in `index.html`.
 
 To skip it entirely, leave `CONFIG.chatbot.endpoint` empty — the widget won't render.
+
+### Abuse & cost protection
+
+The worker layers several defences so the chat can't be scraped or used to run up the Anthropic bill:
+- **Origin allowlist + CORS** — only the site's own origins may call `/chat`.
+- **Per-IP burst limit** — 10 requests / 60 s via the `RATE_LIMITER` binding.
+- **Daily cost caps** — a hard backstop in the `USAGE` KV namespace: 800 accepted messages/day globally and 40/day per IP (UTC, tunable at the top of `src/index.js`). Fails open on KV errors so a hiccup never takes the chat down.
+- **Cloudflare Turnstile** — an invisible bot challenge. It's enforced only when the `TURNSTILE_SECRET` worker secret is set, so the worker stays working before it's configured.
+
+To turn Turnstile on:
+1. In the Cloudflare dashboard, **Turnstile → Add widget** (mode: Managed) for your domain ex:`dasouqi.com`. Note the **site key** (public) and **secret key** (private).
+2. Set `CONFIG.chatbot.turnstileSiteKey` in `config.js` to the site key.
+3. Set the secret on the worker: `npx wrangler secret put TURNSTILE_SECRET --config wrangler.toml` (paste the secret key).
+4. **Go-live order matters:** deploy the front-end (site key live) *before* setting the worker secret, or set the secret only once the new `chatbot.js` is live — otherwise the live page sends no token and every request is rejected. Turnstile is skipped automatically on localhost.
 
 ## License
 
