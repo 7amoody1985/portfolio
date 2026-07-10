@@ -1204,6 +1204,20 @@ body.has-aichat .to-top { bottom: 84px; }
 }
 .aichat__chip:hover { color: var(--accent); border-color: var(--accent); }
 
+/* Turnstile fallback slot — empty until Cloudflare needs an interactive
+   challenge (VPN / strict-browser visitors), then shown above the input. */
+.aichat__gate { display: none; }
+.aichat__gate.is-active {
+  display: block;
+  padding: 10px 12px;
+  border-top: 1px solid var(--border);
+}
+.aichat__gate-note {
+  font-size: .74rem;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
 .aichat__form {
   display: flex; gap: 8px;
   padding: 10px 12px;
