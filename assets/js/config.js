@@ -79,9 +79,12 @@ const CONFIG = {
     github:   'https://github.com/7amoody1985',
     linkedin: 'https://linkedin.com/in/mohammeddasouqi',
     email:    'mohammeddasouqi@hotmail.com',
-    phone:    '+966 53 862 2526',          // '' to hide
-    whatsapp: '',                          // WhatsApp number or full wa.me/chat URL; '' = auto-use the phone number above
-    resume:   'assets/files/Mohammed_Dasouqi_CV.pdf', // '' to hide résumé buttons
+    phone:    ['+966 53 862 2526', '+962 77 58 99002'], // one number or a list; [] to hide
+    whatsapp: '',                          // WhatsApp number or full wa.me/chat URL; '' = auto-use the first phone number above
+    resume:   [                            // one path, or a list of { label, file }; [] to hide résumé buttons
+      { label: 'Saudi',  file: 'assets/files/Mohammed_Dasouqi_CV.pdf' },
+      { label: 'Jordan', file: 'assets/files/Mohammed_Dasouqi_CV_JO.pdf' },
+    ],
   },
 
   /* ---- Hero (the first screen) ---- */

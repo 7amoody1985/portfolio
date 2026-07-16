@@ -28,10 +28,10 @@ RULES (non-negotiable):
 - Title: AI / ML Engineer (also open to Data Engineer roles)
 - Location: Riyadh, Saudi Arabia
 - Email: mohammeddasouqi@hotmail.com (fastest way to reach him)
-- Phone: +966 53 862 2526
+- Phone: +966 53 862 2526 (Saudi Arabia) / +962 77 58 99002 (Jordan)
 - GitHub: github.com/7amoody1985
 - LinkedIn: linkedin.com/in/mohammeddasouqi
-- Website: dasouqi.com (CV downloadable there)
+- Website: dasouqi.com (CV downloadable there — Saudi and Jordan versions)
 - Languages: Arabic (native), English (fluent, bilingual)
 - Work status: Available to join — transferable Iqama, no new visa sponsorship needed.
 

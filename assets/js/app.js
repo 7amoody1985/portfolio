@@ -12,6 +12,10 @@ const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 const telHref = (p) => 'tel:' + String(p).replace(/[^\d+]/g, '');
 /* WhatsApp deep link: pass a full https URL through, else build wa.me from digits */
 const waHref = (v) => { const s = String(v).trim(); return /^https?:\/\//.test(s) ? s : 'https://wa.me/' + s.replace(/\D/g, ''); };
+/* CONFIG.links.phone / .resume accept one value or a list — normalize to arrays */
+const phoneList = (L) => Array.isArray(L.phone) ? L.phone : L.phone ? [L.phone] : [];
+const resumeList = (L) => (Array.isArray(L.resume) ? L.resume : L.resume ? [{ file: L.resume }] : [])
+  .map(r => `<a href="${r.file}" class="tlink js-file-link" target="_blank" rel="noopener">Résumé${r.label ? ` (${esc(r.label)})` : ''} <span class="arr" aria-hidden="true">↗</span></a>`);
 const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const noHover = () => window.matchMedia('(hover: none)').matches;
 
@@ -188,7 +192,7 @@ function renderHero() {
     <div class="hero__cta h-rev" style="--hd:620ms">
       <a href="#projects" class="btn btn--primary">View projects <span class="btn__arr" aria-hidden="true">↓</span></a>
       ${L.github ? `<a href="${L.github}" target="_blank" rel="noopener" class="tlink">GitHub <span class="arr" aria-hidden="true">↗</span></a>` : ''}
-      ${L.resume ? `<a href="${L.resume}" class="tlink js-file-link" target="_blank" rel="noopener">Résumé <span class="arr" aria-hidden="true">↗</span></a>` : ''}
+      ${resumeList(L).join('')}
     </div>
     ${meta ? `<div class="hero__meta h-rev" style="--hd:720ms">${meta}</div>` : ''}
     <div class="hero__bored h-rev" style="--hd:850ms">
@@ -574,10 +578,10 @@ function renderContact() {
   const links = [];
   if (L.github) links.push(`<a class="tlink" href="${L.github}" target="_blank" rel="noopener">GitHub <span class="arr" aria-hidden="true">↗</span></a>`);
   if (L.linkedin) links.push(`<a class="tlink" href="${L.linkedin}" target="_blank" rel="noopener">LinkedIn <span class="arr" aria-hidden="true">↗</span></a>`);
-  if (L.resume) links.push(`<a class="tlink js-file-link" href="${L.resume}" target="_blank" rel="noopener">Résumé <span class="arr" aria-hidden="true">↗</span></a>`);
-  if (L.phone) links.push(`<a class="tlink" href="${telHref(L.phone)}">${esc(L.phone)}</a>`);
-  // WhatsApp — explicit CONFIG.links.whatsapp, else derived from the phone number
-  const wa = L.whatsapp || L.phone;
+  links.push(...resumeList(L));
+  phoneList(L).forEach(p => links.push(`<a class="tlink" href="${telHref(p)}">${esc(p)}</a>`));
+  // WhatsApp — explicit CONFIG.links.whatsapp, else derived from the first phone number
+  const wa = L.whatsapp || phoneList(L)[0];
   if (wa) links.push(`<a class="tlink" href="${waHref(wa)}" target="_blank" rel="noopener">WhatsApp <span class="arr" aria-hidden="true">↗</span></a>`);
   $('#contact-mount').innerHTML = `
     ${c.kicker ? `<p class="contact__kicker"><span>05 — ${esc(c.kicker)}</span><i class="contact__kicker-rule" aria-hidden="true"></i></p>` : ''}
