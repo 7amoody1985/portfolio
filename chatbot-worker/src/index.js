@@ -2,7 +2,8 @@
    Portfolio chatbot proxy — Cloudflare Worker.
 
    POST /chat  { messages: [{role:'user'|'assistant', content:'...'}, ...],
-                 turnstileToken?: '...' }
+                 turnstileToken?: '...',
+                 verificationPass?: '...' }
    → streams the assistant reply as newline-delimited JSON events
      (the Anthropic SDK's raw stream event format; the widget reads
      content_block_delta / text_delta events).
@@ -30,6 +31,7 @@ const MAX_OUTPUT_TOKENS = 1024;
 /* Abuse limits */
 const MAX_TURNS = 16;          // messages kept per request (8 exchanges)
 const MAX_MESSAGE_CHARS = 500; // per user message
+const VERIFICATION_PASS_TTL_SECONDS = 1800; // one visible Turnstile solve per chat session
 
 /* Daily cost caps (UTC day) — a wallet backstop, enforced via KV. */
 const DAILY_GLOBAL_CAP = 800;  // total accepted messages/day across everyone
@@ -37,6 +39,7 @@ const DAILY_IP_CAP = 40;       // accepted messages/day from a single IP
 const DAY_TTL_SECONDS = 172800; // counters self-expire after 2 days
 
 const TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
+const CHAT_VERIFICATION_HEADER = 'X-Chat-Verification';
 
 const ALLOWED_ORIGINS = [
   'https://dasouqi.com',
@@ -113,12 +116,57 @@ async function verifyTurnstile(env, token, ip) {
   }
 }
 
+function base64urlEncode(s) {
+  return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
+function base64urlDecode(s) {
+  const padded = s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4);
+  return atob(padded);
+}
+
+async function hmacSha256(env, value) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    enc.encode(env.TURNSTILE_SECRET || env.ANTHROPIC_API_KEY || 'dev'),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(value));
+  return base64urlEncode(String.fromCharCode(...new Uint8Array(sig)));
+}
+
+async function createVerificationPass(env) {
+  const payload = base64urlEncode(JSON.stringify({
+    exp: Math.floor(Date.now() / 1000) + VERIFICATION_PASS_TTL_SECONDS,
+  }));
+  return `${payload}.${await hmacSha256(env, payload)}`;
+}
+
+async function verifyVerificationPass(env, pass) {
+  if (!env.TURNSTILE_SECRET) return true;
+  if (!pass || typeof pass !== 'string') return false;
+  const parts = pass.split('.');
+  if (parts.length !== 2) return false;
+  const [payload, sig] = parts;
+  if (sig !== await hmacSha256(env, payload)) return false;
+  try {
+    const data = JSON.parse(base64urlDecode(payload));
+    return Number.isFinite(data.exp) && data.exp > Math.floor(Date.now() / 1000);
+  } catch {
+    return false;
+  }
+}
+
 function corsHeaders(origin) {
   const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
   return {
     'Access-Control-Allow-Origin': allowed,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Expose-Headers': CHAT_VERIFICATION_HEADER,
     'Access-Control-Max-Age': '86400',
     'Vary': 'Origin',
   };
@@ -183,9 +231,16 @@ export default {
     const daily = await checkDailyCaps(env, ip);
     if (!daily.ok) return json(429, { error: 'daily_limit' }, origin);
 
-    /* Bot gate: prove a real browser via Turnstile (no-op until configured). */
-    const human = await verifyTurnstile(env, body.turnstileToken, ip);
-    if (!human) return json(403, { error: 'failed_challenge' }, origin);
+    /* Bot gate: one successful Turnstile solve earns a short-lived signed pass
+       for the rest of the chat session. Turnstile tokens themselves stay
+       single-use and are still validated server-side. */
+    let verificationPass = '';
+    const hasValidPass = await verifyVerificationPass(env, body.verificationPass);
+    if (!hasValidPass) {
+      const human = await verifyTurnstile(env, body.turnstileToken, ip);
+      if (!human) return json(403, { error: 'failed_challenge' }, origin);
+      verificationPass = await createVerificationPass(env);
+    }
 
     /* Accepted — count it against today's budget, then call the model. */
     await bumpDailyCaps(env, daily);
@@ -225,6 +280,7 @@ export default {
         headers: {
           'Content-Type': 'application/x-ndjson; charset=utf-8',
           'Cache-Control': 'no-store',
+          ...(verificationPass ? { [CHAT_VERIFICATION_HEADER]: verificationPass } : {}),
           ...corsHeaders(origin),
         },
       });

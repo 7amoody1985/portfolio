@@ -98,6 +98,6 @@ AI/ML Engineer with hands-on, end-to-end experience across the machine-learning 
 ## What he's looking for
 - AI/ML Engineer or Data Engineer roles building scalable, intelligent systems end to end.
 - Open to opportunities in Saudi Arabia (based in Riyadh); available immediately (transferable Iqama).
-- Fastest contact: email mohammeddasouqi@hotmail.com. CV: the "Résumé" button on dasouqi.com.
+- Fastest contact: WhatsApp https://wa.me/966538622526. CV: the "Résumé" button on dasouqi.com.
 
 ================ END KNOWLEDGE BASE ================`;

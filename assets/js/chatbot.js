@@ -21,6 +21,8 @@
   const EMAIL = (typeof CONFIG !== 'undefined' && CONFIG.links && CONFIG.links.email) || '';
   const MAX_INPUT = 500;   // matches the worker's per-message cap
   const MAX_TURNS = 16;    // matches the worker's history cap
+  const VERIFICATION_STORAGE_KEY = 'portfolio-chatbot-verification';
+  const VERIFICATION_HEADER = 'X-Chat-Verification';
 
   /* Cloudflare Turnstile (bot protection). Only in production and only when a
      site key is configured — skipped on localhost so `wrangler dev` is easy. */
@@ -225,11 +227,31 @@
     });
   }
 
-  function postChat(token) {
+  function getVerificationPass() {
+    try { return sessionStorage.getItem(VERIFICATION_STORAGE_KEY) || ''; } catch (e) { return ''; }
+  }
+
+  function setVerificationPass(pass) {
+    try {
+      if (pass) sessionStorage.setItem(VERIFICATION_STORAGE_KEY, pass);
+      else sessionStorage.removeItem(VERIFICATION_STORAGE_KEY);
+    } catch (e) {}
+  }
+
+  function rememberVerificationPass(res) {
+    const pass = res.headers.get(VERIFICATION_HEADER);
+    if (pass) setVerificationPass(pass);
+  }
+
+  function postChat(token, verificationPass) {
     return fetch(ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: history.slice(-MAX_TURNS), turnstileToken: token }),
+      body: JSON.stringify({
+        messages: history.slice(-MAX_TURNS),
+        turnstileToken: token,
+        verificationPass: verificationPass || '',
+      }),
     });
   }
 
@@ -286,25 +308,31 @@
     let bubble = null;
     let answer = '';
     try {
-      /* Mint a fresh bot-gate token first (no-op when Turnstile isn't set up). */
+      /* Reuse a short-lived server-issued verification pass when available.
+         If absent or rejected, mint a fresh single-use Turnstile token. */
       let token = null;
-      try {
-        token = await getTurnstileToken();
-      } catch (e) {
-        typing.remove();
-        errorBubble(CHALLENGE_MSG);
-        history.pop();
-        return;
+      let verificationPass = getVerificationPass();
+      if (!verificationPass) {
+        try {
+          token = await getTurnstileToken();
+        } catch (e) {
+          typing.remove();
+          errorBubble(CHALLENGE_MSG);
+          history.pop();
+          return;
+        }
       }
 
-      let res = await postChat(token);
+      let res = await postChat(token, verificationPass);
 
       if (!res.ok) {
         let code = await readErrorCode(res);
         if (code === 'failed_challenge') {
+          setVerificationPass('');
+          verificationPass = '';
           try {
             token = await getTurnstileToken();
-            res = await postChat(token);
+            res = await postChat(token, verificationPass);
             code = res.ok ? '' : await readErrorCode(res);
           } catch (e) {}
         }
@@ -321,6 +349,7 @@
           return;
         }
       }
+      rememberVerificationPass(res);
 
       /* ND-JSON stream: one raw Anthropic event per line. */
       const reader = res.body.getReader();
