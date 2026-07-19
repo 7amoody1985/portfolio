@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self'; script-src 'self' 'unsafe-inline'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta name="theme-color" content="#0a0a0b" />
+  <meta name="robots" content="noindex" />
+
+  <title>Page not found — Mohammed Dasouqi</title>
+
+  <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg" />
+  <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png" />
+
+  <!-- Apply saved (or default) theme before paint, matching the main site. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('mdtheme');
+        if (t === 'professional' || t === 'neural') t = 'dark';
+        document.documentElement.setAttribute('data-theme', t === 'light' || t === 'dark' ? t : 'dark');
+      } catch (e) {}
+    })();
+  </script>
+
+  <link rel="stylesheet" href="/assets/css/style.css?v=4.9" />
+
+  <style>
+    .nf {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 18px;
+      padding: 8vh var(--gutter);
+    }
+    .nf__code {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: clamp(88px, 22vw, 220px);
+      line-height: 0.9;
+      letter-spacing: -0.03em;
+      color: var(--text);
+    }
+    .nf__code .accent { color: var(--accent); }
+    .nf__title {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: clamp(22px, 5vw, 34px);
+      letter-spacing: -0.01em;
+    }
+    .nf__text {
+      color: var(--muted);
+      max-width: 46ch;
+      font-size: 1.05rem;
+    }
+    .nf__cta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px 22px;
+      align-items: center;
+      justify-content: center;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <main class="nf">
+    <p class="nf__code">404<span class="accent">.</span></p>
+    <h1 class="nf__title">This page took a wrong turn.</h1>
+    <p class="nf__text">The page you're looking for doesn't exist or has moved. Let's get you back on track.</p>
+    <div class="nf__cta">
+      <a href="/" class="btn btn--primary">Back home <span class="btn__arr" aria-hidden="true">→</span></a>
+      <a href="mailto:mohammeddasouqi@hotmail.com" class="tlink">Email me <span class="arr" aria-hidden="true">↗</span></a>
+    </div>
+  </main>
+</body>
+</html>

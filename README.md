@@ -28,7 +28,7 @@ A fast, single-page developer/engineer portfolio — built from scratch with **v
 
 1. **Edit `assets/js/config.js`** — it's one well-commented object holding everything: your name, links, hero, about, skills, projects, experience and contact. Set any optional field to `''` or `false` to hide it.
 2. **Add your files:**
-   - Résumé → `assets/files/` (then point `links.resume` at it)
+   - Résumé → `assets/files/` (then point `links.resume` at it — either a single path, or a list of `{ label, file }` entries to offer several region-specific versions as separate labelled buttons; `links.phone` likewise accepts one number or a list)
    - Project reports (PDF) → `assets/files/reports/` (then set a project's `paper`)
    - A screenshot for the featured project → `assets/img/projects/` (set `featured.image`; regular project rows are text-only by design)
    - Any link to a file that doesn't exist yet is automatically dimmed on the live site — nothing shows as broken.
@@ -61,6 +61,8 @@ Also works as-is on Netlify or Vercel.
 ```
 .
 ├─ index.html              # thin template (mount points only)
+├─ 404.html                # on-brand not-found page (GitHub Pages serves it automatically)
+├─ cv/                     # short links: /cv → résumé PDF, /cv/jo → the Jordan version
 ├─ assets/
 │  ├─ css/style.css        # styles + theme variables
 │  ├─ js/
@@ -69,8 +71,8 @@ Also works as-is on Netlify or Vercel.
 │  │  ├─ demos.js          # interactive project demos (crawler sim, NL→SQL chat)
 │  │  ├─ brickbreaker.js   # the mini-game popup
 │  │  └─ chatbot.js        # AI chat widget (talks to chatbot-worker/)
-│  ├─ files/               # résumé + project reports (PDF)
-│  └─ img/                 # favicon.svg, og.png, projects/ screenshots
+│  ├─ files/               # résumé(s) + project reports (PDF)
+│  └─ img/                 # favicon.svg, apple-touch-icon.png, og.png, projects/ screenshots
 ├─ chatbot-worker/         # Cloudflare Worker backing the AI chatbot (Claude API)
 └─ README.md
 ```

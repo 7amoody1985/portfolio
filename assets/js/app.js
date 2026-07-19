@@ -128,12 +128,14 @@ function renderMeta() {
 function injectJsonLd() {
   const h = CONFIG.hero || {}, L = CONFIG.links || {}, m = CONFIG.meta || {}, x = m.schema || {};
   const canonical = document.querySelector('link[rel="canonical"]');
+  const ogImage = document.querySelector('meta[property="og:image"]');
   const sameAs = [L.github, L.linkedin].filter(Boolean);
   const data = {
     '@context': 'https://schema.org',
     '@type': 'Person',
     name: h.name || undefined,
     url: (canonical && canonical.href) || undefined,
+    image: (ogImage && ogImage.getAttribute('content')) || undefined,
     jobTitle: (h.roles && h.roles[0]) || undefined,
     description: m.description || undefined,
     email: L.email ? 'mailto:' + L.email : undefined,
@@ -192,6 +194,7 @@ function renderHero() {
     <div class="hero__cta h-rev" style="--hd:620ms">
       <a href="#projects" class="btn btn--primary">View projects <span class="btn__arr" aria-hidden="true">↓</span></a>
       ${L.github ? `<a href="${L.github}" target="_blank" rel="noopener" class="tlink">GitHub <span class="arr" aria-hidden="true">↗</span></a>` : ''}
+      ${L.linkedin ? `<a href="${L.linkedin}" target="_blank" rel="noopener" class="tlink">LinkedIn <span class="arr" aria-hidden="true">↗</span></a>` : ''}
       ${resumeList(L).join('')}
     </div>
     ${meta ? `<div class="hero__meta h-rev" style="--hd:720ms">${meta}</div>` : ''}

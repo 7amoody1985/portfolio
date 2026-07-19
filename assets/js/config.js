@@ -94,7 +94,7 @@ const CONFIG = {
     tagline: 'I build <strong>production-grade intelligent systems</strong> — from deep-learning pipelines for medical imaging to NLP agents and data-driven backends. BSc (Hons) Software Engineering, University of Nottingham.', // HTML allowed
     // Small facts under the buttons. icon: 'pin' | 'cap' | 'chip' (or use any emoji)
     meta: [
-      { icon: 'pin',  text: 'Riyadh, Saudi Arabia' },
+      { icon: 'pin',  text: 'Riyadh, SA · Amman, JO' },
       { icon: 'cap',  text: '2:1 Honours, University of Nottingham' },
       { icon: 'chip', text: 'AI / ML & Data Engineering' },
     ],
@@ -118,7 +118,7 @@ const CONFIG = {
         degree: 'BSc Hons, Nottingham (2:1)',
         focus: ['deep learning', 'NLP agents', 'backends'],
         stack: ['PyTorch', 'FastAPI', 'Kotlin'],
-        location: 'Riyadh, SA',
+        location: 'Riyadh, SA · Amman, JO',
         status: 'available_to_hire',
       },
     },
@@ -251,12 +251,12 @@ const CONFIG = {
     title: 'Let\'s build something <span class="accent">intelligent</span>.', // HTML allowed
     sub: 'Open to AI/ML Engineer and Data Engineer roles. The fastest way to reach me is email.',
     extra: 'Arabic — Native · English — Fluent (bilingual)', // small line under the links; '' to hide
-    availability: 'Available to join — Transferable Iqama, no new visa sponsorship needed', // status pill at the very bottom; '' to hide
+    availability: 'Available to join immediately — Saudi Arabia (transferable Iqama) & Jordan', // status pill at the very bottom; '' to hide
   },
 
   /* ---- Footer (left side is automatically "© YEAR — your name") ---- */
   footer: {
-    right: '<span class="mono">Riyadh, SA</span> · AI / ML Engineer', // HTML allowed, '' to hide
+    right: '<span class="mono">Riyadh, SA · Amman, JO</span> · AI / ML Engineer', // HTML allowed, '' to hide
   },
 
   /* ---- Section headings (numbered automatically) ---- */
