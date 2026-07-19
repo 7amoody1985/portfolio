@@ -100,7 +100,13 @@ async function verifyTurnstile(env, token, ip) {
     if (ip) form.append('remoteip', ip);
     const res = await fetch(TURNSTILE_VERIFY_URL, { method: 'POST', body: form });
     const data = await res.json();
-    return data.success === true;
+    if (data.success === true) return true;
+    console.warn('Turnstile validation rejected', {
+      errorCodes: data['error-codes'] || [],
+      hostname: data.hostname || '',
+      action: data.action || '',
+    });
+    return false;
   } catch (e) {
     console.error('Turnstile verify failed', e);
     return true; // fail open on infra error

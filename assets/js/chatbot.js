@@ -123,18 +123,34 @@
   let tsScriptPromise = null;
   let tsGate = null;          // panel slot the interactive challenge renders into
   let tsTimer = 0;
+  const TS_SCRIPT_TIMEOUT_MS = 15000;
+  const TS_SILENT_TIMEOUT_MS = 25000;
+  const TS_INTERACTIVE_TIMEOUT_MS = 180000;
 
   function loadTurnstileScript() {
     if (window.turnstile) return Promise.resolve();
     if (tsScriptPromise) return tsScriptPromise;
     tsScriptPromise = new Promise((resolve, reject) => {
       const s = document.createElement('script');
+      let done = false;
+      const finish = (fn, value) => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        s.onload = null;
+        s.onerror = null;
+        fn(value);
+      };
+      const timer = setTimeout(() => finish(reject, new Error('turnstile_script_timeout')), TS_SCRIPT_TIMEOUT_MS);
       s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
       s.async = true;
       s.defer = true;
-      s.onload = () => resolve();
-      s.onerror = () => reject(new Error('turnstile_script'));
+      s.onload = () => finish(resolve);
+      s.onerror = () => finish(reject, new Error('turnstile_script'));
       document.head.appendChild(s);
+    }).catch((e) => {
+      tsScriptPromise = null;
+      throw e;
     });
     return tsScriptPromise;
   }
@@ -168,12 +184,22 @@
       size: 'flexible',
       execution: 'execute',              // run only when we call execute()
       appearance: 'interaction-only',    // invisible unless a challenge is needed
-      callback: (token) => { hideGate(); if (tsPending) { tsPending.resolve(token); tsPending = null; } },
+      callback: (token) => {
+        hideGate();
+        if (tsPending) {
+          if (token) tsPending.resolve(token);
+          else tsPending.reject(new Error('turnstile_empty_token'));
+          tsPending = null;
+        }
+      },
       'error-callback': () => { hideGate(); if (tsPending) { tsPending.reject(new Error('turnstile_error')); tsPending = null; } },
-      'before-interactive-callback': () => { showGate(); armTimeout(150000); },
+      'expired-callback': () => { hideGate(); if (tsPending) { tsPending.reject(new Error('turnstile_expired')); tsPending = null; } },
+      'timeout-callback': () => { hideGate(); if (tsPending) { tsPending.reject(new Error('turnstile_interactive_timeout')); tsPending = null; } },
+      'before-interactive-callback': () => { showGate(); armTimeout(TS_INTERACTIVE_TIMEOUT_MS); },
       'after-interactive-callback': hideGate,
       'unsupported-callback': () => { hideGate(); if (tsPending) { tsPending.reject(new Error('turnstile_unsupported')); tsPending = null; } },
     });
+    if (tsWidgetId === undefined || tsWidgetId === null) throw new Error('turnstile_render');
   }
 
   function getTurnstileToken() {
@@ -181,7 +207,7 @@
     return loadTurnstileScript().then(() => {
       ensureTurnstileWidget();
       return new Promise((resolve, reject) => {
-        armTimeout(12000);
+        armTimeout(TS_SILENT_TIMEOUT_MS);
         tsPending = {
           resolve: (t) => { clearTimeout(tsTimer); resolve(t); },
           reject: (e) => { clearTimeout(tsTimer); reject(e); },
@@ -197,6 +223,18 @@
         }
       });
     });
+  }
+
+  function postChat(token) {
+    return fetch(ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: history.slice(-MAX_TURNS), turnstileToken: token }),
+    });
+  }
+
+  async function readErrorCode(res) {
+    try { return (await res.json()).error || ''; } catch (e) { return ''; }
   }
 
   /* ---------------- open / close ---------------- */
@@ -259,23 +297,29 @@
         return;
       }
 
-      const res = await fetch(ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: history.slice(-MAX_TURNS), turnstileToken: token }),
-      });
+      let res = await postChat(token);
 
       if (!res.ok) {
-        let code = '';
-        try { code = (await res.json()).error || ''; } catch (e) {}
-        typing.remove();
-        let msg = FALLBACK_MSG;
-        if (code === 'daily_limit') msg = DAILY_MSG;
-        else if (code === 'failed_challenge') msg = CHALLENGE_MSG;
-        else if (res.status === 429 || code === 'rate_limited') msg = RATE_MSG;
-        errorBubble(msg);
-        history.pop(); // let the visitor retry the same question later
-        return;
+        let code = await readErrorCode(res);
+        if (code === 'failed_challenge') {
+          try {
+            token = await getTurnstileToken();
+            res = await postChat(token);
+            code = res.ok ? '' : await readErrorCode(res);
+          } catch (e) {}
+        }
+        if (res.ok) {
+          // Continue into the normal stream reader below after a fresh token succeeds.
+        } else {
+          typing.remove();
+          let msg = FALLBACK_MSG;
+          if (code === 'daily_limit') msg = DAILY_MSG;
+          else if (code === 'failed_challenge') msg = CHALLENGE_MSG;
+          else if (res.status === 429 || code === 'rate_limited') msg = RATE_MSG;
+          errorBubble(msg);
+          history.pop(); // let the visitor retry the same question later
+          return;
+        }
       }
 
       /* ND-JSON stream: one raw Anthropic event per line. */
