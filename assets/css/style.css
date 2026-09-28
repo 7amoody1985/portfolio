@@ -1222,17 +1222,20 @@ body.has-aichat .to-top { bottom: 84px; }
 
 /* Turnstile fallback slot — empty until Cloudflare needs an interactive
    challenge (VPN / strict-browser visitors), then shown above the input. */
-.aichat__gate { display: none; }
+/* Never display:none — the silent Turnstile check runs in here and must stay
+   laid out; with appearance:'interaction-only' it's invisible until needed. */
+.aichat__gate { padding: 0 12px; }
 .aichat__gate.is-active {
-  display: block;
   padding: 10px 12px;
   border-top: 1px solid var(--border);
 }
 .aichat__gate-note {
+  display: none;
   font-size: .74rem;
   color: var(--muted);
   margin-bottom: 8px;
 }
+.aichat__gate.is-active .aichat__gate-note { display: block; }
 
 .aichat__form {
   display: flex; gap: 8px;

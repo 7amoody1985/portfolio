@@ -112,22 +112,25 @@
   }
 
   /* ---------------- Turnstile (bot gate) ----------------
-     Loads the Cloudflare Turnstile script on demand and mints a fresh,
-     single-use token per message. Runs silently for most visitors
-     (`appearance: 'interaction-only'`), but when Cloudflare can't verify a
-     browser passively (VPNs, locked-down corporate browsers) it escalates to
-     a visible checkbox challenge rendered inside the chat panel — the widget
-     for the site key must be "Managed" mode in the Cloudflare dashboard for
-     this to work. Returns null when Turnstile isn't configured (localhost or
-     no site key), in which case the worker doesn't require a token either. */
-  let tsWidgetId = null;
-  let tsPending = null;       // { resolve, reject } for the in-flight execute()
+     Loads the Cloudflare Turnstile script on demand and mints a single-use
+     token only when the worker needs one (no valid verification pass yet).
+     Runs silently for most visitors (`appearance: 'interaction-only'`), but
+     when Cloudflare can't verify a browser passively (VPNs, locked-down or
+     mobile browsers) it escalates to a visible checkbox rendered inside the
+     chat panel — the site key's widget must be "Managed" mode in the
+     Cloudflare dashboard for this to work.
+     Each check renders a fresh widget and removes it once it settles: a
+     widget left mounted auto-refreshes its token every 5 minutes, re-running
+     the challenge and popping the checkbox up mid-conversation. Its slot is
+     never display:none, so the silent check isn't starved as a hidden iframe.
+     Returns null when Turnstile isn't configured (localhost or no site key),
+     in which case the worker doesn't require a token either. */
   let tsScriptPromise = null;
-  let tsGate = null;          // panel slot the interactive challenge renders into
-  let tsTimer = 0;
   const TS_SCRIPT_TIMEOUT_MS = 15000;
-  const TS_SILENT_TIMEOUT_MS = 25000;
+  const TS_SILENT_TIMEOUT_MS = 30000;
   const TS_INTERACTIVE_TIMEOUT_MS = 180000;
+  const TS_MAX_ERRORS = 2;           // one automatic Turnstile retry (~8 s apart)
+  const TS_FLEXIBLE_MIN_WIDTH = 300; // Turnstile's minimum for size:'flexible'
 
   function loadTurnstileScript() {
     if (window.turnstile) return Promise.resolve();
@@ -157,74 +160,75 @@
     return tsScriptPromise;
   }
 
-  function showGate() {
-    if (tsGate) { tsGate.classList.add('is-active'); log.scrollTop = log.scrollHeight; }
-  }
-  function hideGate() {
-    if (tsGate) tsGate.classList.remove('is-active');
-  }
-
-  /* (Re)arm the token timeout. Short while the check is silent; extended when
-     an interactive challenge appears so the visitor has time to solve it. */
-  function armTimeout(ms) {
-    clearTimeout(tsTimer);
-    tsTimer = setTimeout(() => {
-      if (tsPending) { const p = tsPending; tsPending = null; hideGate(); p.reject(new Error('turnstile_timeout')); }
-    }, ms);
-  }
-
-  function ensureTurnstileWidget() {
-    if (tsWidgetId !== null) return;
-    tsGate = document.createElement('div');
-    tsGate.className = 'aichat__gate';
-    tsGate.innerHTML = '<div class="aichat__gate-note">Quick security check — verify below to continue.</div>';
-    const holder = document.createElement('div');
-    tsGate.appendChild(holder);
-    panel.insertBefore(tsGate, form);
-    tsWidgetId = window.turnstile.render(holder, {
-      sitekey: SITE_KEY,
-      size: 'flexible',
-      execution: 'execute',              // run only when we call execute()
-      appearance: 'interaction-only',    // invisible unless a challenge is needed
-      callback: (token) => {
-        hideGate();
-        if (tsPending) {
-          if (token) tsPending.resolve(token);
-          else tsPending.reject(new Error('turnstile_empty_token'));
-          tsPending = null;
-        }
-      },
-      'error-callback': () => { hideGate(); if (tsPending) { tsPending.reject(new Error('turnstile_error')); tsPending = null; } },
-      'expired-callback': () => { hideGate(); if (tsPending) { tsPending.reject(new Error('turnstile_expired')); tsPending = null; } },
-      'timeout-callback': () => { hideGate(); if (tsPending) { tsPending.reject(new Error('turnstile_interactive_timeout')); tsPending = null; } },
-      'before-interactive-callback': () => { showGate(); armTimeout(TS_INTERACTIVE_TIMEOUT_MS); },
-      'after-interactive-callback': hideGate,
-      'unsupported-callback': () => { hideGate(); if (tsPending) { tsPending.reject(new Error('turnstile_unsupported')); tsPending = null; } },
-    });
-    if (tsWidgetId === undefined || tsWidgetId === null) throw new Error('turnstile_render');
-  }
-
   function getTurnstileToken() {
     if (!SITE_KEY) return Promise.resolve(null);
-    return loadTurnstileScript().then(() => {
-      ensureTurnstileWidget();
-      return new Promise((resolve, reject) => {
-        armTimeout(TS_SILENT_TIMEOUT_MS);
-        tsPending = {
-          resolve: (t) => { clearTimeout(tsTimer); resolve(t); },
-          reject: (e) => { clearTimeout(tsTimer); reject(e); },
-        };
-        try {
-          window.turnstile.reset(tsWidgetId);
-          window.turnstile.execute(tsWidgetId);
-        } catch (e) {
-          clearTimeout(tsTimer);
-          tsPending = null;
-          hideGate();
-          reject(e);
-        }
-      });
-    });
+    return loadTurnstileScript().then(() => new Promise((resolve, reject) => {
+      const gate = document.createElement('div');
+      gate.className = 'aichat__gate';
+      gate.innerHTML = '<div class="aichat__gate-note">Quick security check — tick the box to send your message.</div>';
+      const holder = document.createElement('div');
+      gate.appendChild(holder);
+      panel.insertBefore(gate, form);
+
+      let widgetId = null;
+      let timer = 0;
+      let errors = 0;
+      let settled = false;
+
+      function finish(err, token) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        /* Tear down on the next tick — not from inside the widget's own callback. */
+        setTimeout(() => {
+          try { if (widgetId !== null) window.turnstile.remove(widgetId); } catch (e) {}
+          gate.remove();
+        }, 0);
+        if (err) reject(err); else resolve(token);
+      }
+
+      /* (Re)arm the timeout. Short while the check is silent; extended when an
+         interactive challenge appears so the visitor has time to solve it. */
+      function arm(ms) {
+        clearTimeout(timer);
+        timer = setTimeout(() => finish(new Error('turnstile_timeout')), ms);
+      }
+
+      arm(TS_SILENT_TIMEOUT_MS);
+      try {
+        const id = window.turnstile.render(holder, {
+          sitekey: SITE_KEY,
+          size: holder.clientWidth && holder.clientWidth < TS_FLEXIBLE_MIN_WIDTH ? 'compact' : 'flexible',
+          appearance: 'interaction-only',    // invisible unless a challenge is needed
+          'refresh-expired': 'never',        // single-use: we remove the widget once it settles
+          'refresh-timeout': 'never',
+          callback: (token) => (token ? finish(null, token) : finish(new Error('turnstile_empty_token'))),
+          'error-callback': (code) => {
+            /* 300xxx / 600xxx are transient challenge failures that Turnstile
+               retries by itself (sometimes escalating to the checkbox), so give
+               those a few attempts; anything else is a config/browser error. */
+            errors += 1;
+            if (!/^[36]/.test(String(code)) || errors >= TS_MAX_ERRORS) {
+              finish(new Error('turnstile_error_' + code));
+            }
+            return true; // handled — suppresses Turnstile's console warning
+          },
+          'expired-callback': () => finish(new Error('turnstile_expired')),
+          'timeout-callback': () => finish(new Error('turnstile_interactive_timeout')),
+          'before-interactive-callback': () => {
+            if (settled) return;
+            gate.classList.add('is-active');
+            log.scrollTop = log.scrollHeight;
+            arm(TS_INTERACTIVE_TIMEOUT_MS);
+          },
+          'unsupported-callback': () => finish(new Error('turnstile_unsupported')),
+        });
+        if (id === undefined || id === null) throw new Error('turnstile_render');
+        widgetId = id;
+      } catch (e) {
+        finish(e);
+      }
+    }));
   }
 
   function getVerificationPass() {
@@ -324,6 +328,7 @@
       }
 
       let res = await postChat(token, verificationPass);
+      rememberVerificationPass(res);
 
       if (!res.ok) {
         let code = await readErrorCode(res);
@@ -333,6 +338,7 @@
           try {
             token = await getTurnstileToken();
             res = await postChat(token, verificationPass);
+            rememberVerificationPass(res);
             code = res.ok ? '' : await readErrorCode(res);
           } catch (e) {}
         }
@@ -349,7 +355,6 @@
           return;
         }
       }
-      rememberVerificationPass(res);
 
       /* ND-JSON stream: one raw Anthropic event per line. */
       const reader = res.body.getReader();

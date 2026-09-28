@@ -145,8 +145,10 @@ async function createVerificationPass(env) {
   return `${payload}.${await hmacSha256(env, payload)}`;
 }
 
+/* Checked (and issued) even when Turnstile is off: the widget only asks for a
+   token when it holds no pass, so a worker that never issued one would make
+   the widget run a challenge before every single message. */
 async function verifyVerificationPass(env, pass) {
-  if (!env.TURNSTILE_SECRET) return true;
   if (!pass || typeof pass !== 'string') return false;
   const parts = pass.split('.');
   if (parts.length !== 2) return false;
@@ -172,10 +174,10 @@ function corsHeaders(origin) {
   };
 }
 
-function json(status, body, origin) {
+function json(status, body, origin, extraHeaders = {}) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) },
+    headers: { 'Content-Type': 'application/json', ...extraHeaders, ...corsHeaders(origin) },
   });
 }
 
@@ -234,12 +236,14 @@ export default {
     /* Bot gate: one successful Turnstile solve earns a short-lived signed pass
        for the rest of the chat session. Turnstile tokens themselves stay
        single-use and are still validated server-side. */
-    let verificationPass = '';
+    let passHeaders = {};
     const hasValidPass = await verifyVerificationPass(env, body.verificationPass);
     if (!hasValidPass) {
       const human = await verifyTurnstile(env, body.turnstileToken, ip);
       if (!human) return json(403, { error: 'failed_challenge' }, origin);
-      verificationPass = await createVerificationPass(env);
+      /* Sent on error replies too — the Turnstile token is spent either way,
+         so an upstream hiccup shouldn't cost the visitor another challenge. */
+      passHeaders = { [CHAT_VERIFICATION_HEADER]: await createVerificationPass(env) };
     }
 
     /* Accepted — count it against today's budget, then call the model. */
@@ -280,21 +284,21 @@ export default {
         headers: {
           'Content-Type': 'application/x-ndjson; charset=utf-8',
           'Cache-Control': 'no-store',
-          ...(verificationPass ? { [CHAT_VERIFICATION_HEADER]: verificationPass } : {}),
+          ...passHeaders,
           ...corsHeaders(origin),
         },
       });
     } catch (err) {
       /* Typed SDK errors → clean JSON the widget can message on. */
       if (err instanceof Anthropic.RateLimitError) {
-        return json(429, { error: 'upstream_rate_limited' }, origin);
+        return json(429, { error: 'upstream_rate_limited' }, origin, passHeaders);
       }
       if (err instanceof Anthropic.APIError) {
         console.error('Anthropic API error', err.status, err.message);
-        return json(502, { error: 'upstream_error' }, origin);
+        return json(502, { error: 'upstream_error' }, origin, passHeaders);
       }
       console.error('Worker error', err);
-      return json(500, { error: 'server_error' }, origin);
+      return json(500, { error: 'server_error' }, origin, passHeaders);
     }
   },
 };

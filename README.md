@@ -95,7 +95,7 @@ The worker layers several defences so the chat can't be scraped or used to run u
 - **Origin allowlist + CORS** — only the site's own origins may call `/chat`.
 - **Per-IP burst limit** — 10 requests / 60 s via the `RATE_LIMITER` binding.
 - **Daily cost caps** — a hard backstop in the `USAGE` KV namespace: 800 accepted messages/day globally and 40/day per IP (UTC, tunable at the top of `src/index.js`). Fails open on KV errors so a hiccup never takes the chat down.
-- **Cloudflare Turnstile** — an invisible bot challenge. It's enforced only when the `TURNSTILE_SECRET` worker secret is set, so the worker stays working before it's configured.
+- **Cloudflare Turnstile** — an invisible bot challenge. It's enforced only when the `TURNSTILE_SECRET` worker secret is set, so the worker stays working before it's configured. One successful check earns a signed 30-minute pass (`X-Chat-Verification` header, kept in `sessionStorage`), so visitors see at most one checkbox per chat session, not one per message.
 
 To turn Turnstile on:
 1. In the Cloudflare dashboard, **Turnstile → Add widget** (mode: Managed) for your domain ex:`dasouqi.com`. Note the **site key** (public) and **secret key** (private).
